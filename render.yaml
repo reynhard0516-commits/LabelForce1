@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: labelforce-backend
+    env: docker
+    repo: https://github.com/your/repo
+    branch: main
+    dockerfilePath: backend/Dockerfile
+  - type: web
+    name: labelforce-frontend
+    env: docker
+    repo: https://github.com/your/repo
+    branch: main
+    dockerfilePath: frontend/Dockerfile
+
+databases:
+  - name: labelforce-db
+    engine: postgres
+    plan: starter

@@ -5,6 +5,14 @@ services:
     repo: https://github.com/your/repo
     branch: main
     dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: labelforce-db
+          property: connectionString
+      - key: REDIS_URL
+        value: redis://rediscache:6379/0
+
   - type: web
     name: labelforce-frontend
     env: docker
@@ -12,7 +20,14 @@ services:
     branch: main
     dockerfilePath: frontend/Dockerfile
 
+  - type: redis
+    name: rediscache
+    ipAllowList: []
+    plan: free
+
 databases:
   - name: labelforce-db
-    engine: postgres
+    region: oregon
+    databaseName: labelforce
+    user: labelforce_user
     plan: starter

@@ -3,7 +3,7 @@ services:
     name: labelforce-backend
     env: docker
     repo: https://github.com/reynhard0516/LabelForce1
-    branch: main
+    branch: LabelForce1
     dockerfilePath: backend/Dockerfile
     envVars:
       - key: DATABASE_URL

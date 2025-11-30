@@ -1,0 +1,19 @@
+{
+  "name": "labelforce-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "dexie": "3.2.2",
+    "jszip": "3.10.1"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  }
+}

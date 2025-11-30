@@ -17,7 +17,7 @@ services:
     name: labelforce-frontend
     env: docker
     repo: https://github.com/reynhard0516/LabelForce1
-    branch: main
+    branch: LabelForce1
     dockerfilePath: frontend/Dockerfile
 
   - type: redis

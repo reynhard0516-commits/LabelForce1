@@ -2,7 +2,7 @@ services:
   - type: web
     name: labelforce-backend
     env: docker
-    repo: https://github.com/your/repo
+    repo: https://github.com/reynhard0516/LabelForce1
     branch: main
     dockerfilePath: backend/Dockerfile
     envVars:
@@ -16,7 +16,7 @@ services:
   - type: web
     name: labelforce-frontend
     env: docker
-    repo: https://github.com/your/repo
+    repo: https://github.com/reynhard0516/LabelForce1
     branch: main
     dockerfilePath: frontend/Dockerfile
 

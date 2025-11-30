@@ -30,4 +30,4 @@ databases:
     region: oregon
     databaseName: labelforce
     user: labelforce_user
-    plan: new plan
+    plan: free

@@ -2,7 +2,7 @@ services:
   - type: web
     name: labelforce-backend
     env: docker
-    repo: https://github.com/reynhard0516/LabelForce1
+    repo: https://github.com/reynhard0516-commits/LabelForce1
     branch: LabelForce1
     dockerfilePath: backend/Dockerfile
     envVars:
@@ -10,19 +10,18 @@ services:
         fromDatabase:
           name: labelforce-db
           property: connectionString
-      - key: REDIS_URL
-        value: redis://rediscache:6379/0
+      - key: LF_SECRET
+        value: change_me_secret
 
   - type: web
     name: labelforce-frontend
     env: docker
-    repo: https://github.com/reynhard0516/LabelForce1
+    repo: https://github.com/reynhard0516-commits/LabelForce1
     branch: LabelForce1
     dockerfilePath: frontend/Dockerfile
 
   - type: redis
     name: rediscache
-    ipAllowList: []
     plan: free
 
 databases:
@@ -30,4 +29,4 @@ databases:
     region: oregon
     databaseName: labelforce
     user: labelforce_user
-    plan: free
+    plan: basic-256mb

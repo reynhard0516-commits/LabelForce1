@@ -1,37 +1,10 @@
 services:
   - type: web
-    name: labelforce-backend
-    env: docker
-    repo: https://github.com/reynhard0516-commits/LabelForce1
-    branch: LabelForce1
-    rootDir: Backend
-    dockerfilePath: Backend/Dockerfile
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: labelforce-db
-          property: connectionString
-      - key: LF_SECRET
-        value: change_me_secret
-
-  - type: web
     name: labelforce-frontend
-    env: docker
-    repo: https://github.com/reynhard0516-commits/LabelForce1
-    branch: LabelForce1
-    rootDir: Frontend
-    dockerfilePath: Frontend/Dockerfile
+    runtime: node
+    rootDir: src
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
     envVars:
       - key: VITE_API_URL
-        value: https://labelforce-backend.onrender.com
-
-  - type: redis
-    name: rediscache
-    plan: free
-
-databases:
-  - name: labelforce-db
-    region: oregon
-    databaseName: labelforce
-    user: labelforce_user
-    plan: basic-256mb
+        sync: false

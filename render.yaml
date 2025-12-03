@@ -14,7 +14,7 @@ services:
         value: change_me_secret
 
   - type: web
-    name: labelforce-frontend
+    name: labelforce-Frontend
     env: docker
     repo: https://github.com/reynhard0516-commits/LabelForce1
     branch: LabelForce1

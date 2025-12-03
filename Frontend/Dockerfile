@@ -1,15 +1,23 @@
-# Stage 1: build
+# Build Stage
 FROM node:20-alpine AS build
+
 WORKDIR /app
+
 COPY package.json package-lock.json* ./
-RUN npm ci --silent || npm install --silent
+RUN npm install
+
 COPY . .
 RUN npm run build
 
-# Stage 2: serve with nginx
-FROM nginx:stable-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-# add nginx config to enable SPA fallback (optional)
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Serve Stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN npm install -g serve
+
+COPY --from=build /app/dist /app/dist
+
+EXPOSE 4173
+
+CMD ["serve", "-s", "dist", "-l", "4173"]

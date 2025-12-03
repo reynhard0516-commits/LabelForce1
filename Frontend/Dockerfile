@@ -1,7 +1,21 @@
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Serve stage
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json /app
-RUN npm install --silent
-COPY . /app
-EXPOSE 5173
-CMD ["npm", "run", "dev", "--", "--host"]
+
+# Install a lightweight static file server
+RUN npm install -g serve
+
+COPY --from=build /app/dist ./dist
+
+EXPOSE 3000
+CMD ["serve", "-s", "dist", "-l", "3000"]

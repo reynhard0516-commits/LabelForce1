@@ -1,10 +1,4 @@
-# Render Blueprint - LabelForce
-version: "1"
-
 services:
-  # ================================
-  # BACKEND (FastAPI + Uvicorn)
-  # ================================
   - type: web
     name: labelforce-backend
     env: docker
@@ -19,13 +13,7 @@ services:
           property: connectionString
       - key: LF_SECRET
         value: change_me_secret
-      - key: PYTHONUNBUFFERED
-        value: "1"
-    plan: starter
 
-  # ================================
-  # FRONTEND (React + Vite)
-  # ================================
   - type: web
     name: labelforce-frontend
     env: docker
@@ -36,21 +24,14 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://labelforce-backend.onrender.com
-    plan: starter
-    
-  # ================================
-  # REDIS CACHE (optional)
-  # ================================
+
   - type: redis
     name: rediscache
     plan: free
 
-# ================================
-# POSTGRES DATABASE
-# ================================
 databases:
   - name: labelforce-db
     region: oregon
-    plan: basic-256mb
     databaseName: labelforce
     user: labelforce_user
+    plan: basic-256mb

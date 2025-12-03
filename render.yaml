@@ -30,3 +30,7 @@ databases:
     databaseName: labelforce
     user: labelforce_user
     plan: basic-256mb
+
+envVars:
+  - key: VITE_API_URL
+    value: https://labelforce1-8.onrender.com

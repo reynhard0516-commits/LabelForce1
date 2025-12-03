@@ -7,28 +7,29 @@ services:
     dockerfilePath: Backend/Dockerfile   # ← FIXED
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: labelforce-db
+        fromDataase:
+          name: Labelforce-db
           property: connectionString
       - key: LF_SECRET
         value: change_me_secret
 
   - type: web
-    name: labelforce-Frontend
-    env: docker
-    repo: https://github.com/reynhard0516-commits/LabelForce1
-    branch: LabelForce1
-    dockerfilePath: Frontend/Dockerfile  # ← FIXED
+  name: Labelforce-Frontend
+  env: docker
+  repo: https://github.com/reynhard0516-commits/LabelForce1
+  branch: LabelForce1
+  rootDir: Frontend
+  dockerfilePath: Frontend/Dockerfile
 
   - type: redis
     name: rediscache
     plan: free
 
 databases:
-  - name: labelforce-db
+  - name: Labelforce-db
     region: oregon
-    databaseName: labelforce
-    user: labelforce_user
+    databaseName: Labelforce
+    user: Labelforce_user
     plan: basic-256mb
 
 envVars:

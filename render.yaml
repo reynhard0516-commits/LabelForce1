@@ -4,7 +4,7 @@ services:
     env: docker
     repo: https://github.com/reynhard0516-commits/LabelForce1
     branch: LabelForce1
-    dockerfilePath: backend/Dockerfile
+    dockerfilePath: Backend/Dockerfile   # ← FIXED
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -18,7 +18,7 @@ services:
     env: docker
     repo: https://github.com/reynhard0516-commits/LabelForce1
     branch: LabelForce1
-    dockerfilePath: frontend/Dockerfile
+    dockerfilePath: Frontend/Dockerfile  # ← FIXED
 
   - type: redis
     name: rediscache

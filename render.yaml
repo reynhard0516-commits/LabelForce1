@@ -14,7 +14,7 @@ services:
     rootDir: Frontend
     env: node
     buildCommand: npm install && npm run build
-    startCommand: npm run preview -- --host --port 5173
+    startCommand: npm run preview -- --host --port $PORT
     envVars:
       - key: VITE_API_URL
         value: "https://labelforce-backend.onrender.com"

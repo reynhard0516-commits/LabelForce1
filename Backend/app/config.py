@@ -1,5 +1,3 @@
-
-
 class Settings:
     PROJECT_NAME = "Labelforce Backend"
     DATABASE_URL = os.getenv("DATABASE_URL")

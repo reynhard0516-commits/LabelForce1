@@ -10,6 +10,26 @@ app = FastAPI()
 def startup():
     create_db_and_tables()
 
+    # AUTO-CREATE ADMIN IF IT DOESN'T EXIST
+    from sqlmodel import select
+    from Backend.auth import hash_password
+    from Backend.models import User
+    from Backend.database import get_session
+
+    with get_session() as session:
+        admin = session.exec(
+            select(User).where(User.email == "admin@labelforce.com")
+        ).first()
+
+        if not admin:
+            admin = User(
+                email="admin@labelforce.com",
+                hashed_password=hash_password("Admin1234!"),
+                is_admin=True
+            )
+            session.add(admin)
+            session.commit()
+
 @app.post("/register")
 def register(email: str, password: str, session=Depends(get_session)):
     exists = session.exec(select(User).where(User.email == email)).first()

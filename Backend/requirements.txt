@@ -1,2 +1,9 @@
-buildCommand: pip install -r Backend/requirements.txt
-startCommand: uvicorn Backend.main:app --host 0.0.0.0 --port $PORT
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-multipart
+passlib[bcrypt]
+python-jose
+aiofiles
+requests

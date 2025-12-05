@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+sqlmodel
 sqlalchemy
 pydantic
 python-multipart

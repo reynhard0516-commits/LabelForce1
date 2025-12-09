@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlmodel import select
-from Backend.database import create_db_and_tables, get_session
-from Backend.models import User
-from Backend.auth import hash_password, verify_password, create_access_token
+
+from database import create_db_and_tables, get_session
+from models import User
+from config import settings
+from auth import hash_password, verify_password, create_access_token
 
 app = FastAPI()
 
@@ -12,9 +14,9 @@ def startup():
 
     # AUTO-CREATE ADMIN IF IT DOESN'T EXIST
     from sqlmodel import select
-    from Backend.auth import hash_password
-    from Backend.models import User
-    from Backend.database import get_session
+    from auth import hash_password
+from models import User
+from database import get_session
 
     with get_session() as session:
         admin = session.exec(

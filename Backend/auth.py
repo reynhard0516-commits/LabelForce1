@@ -4,9 +4,12 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from Backend.models import User
-from Backend.database import get_session
-from sqlmodel import select
+from models import User
+from database import get_session
+from config import settings
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+import jwt
 
 SECRET_KEY = "SUPER_SECRET_KEY_CHANGE_THIS"
 ALGORITHM = "HS256"

@@ -1,9 +1,11 @@
-import os
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/labelforce")
-JWT_SECRET = os.getenv("JWT_SECRET", "supersecret")
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
+class Settings(BaseSettings):
+    DATABASE_URL: str = "sqlite+aiosqlite:///./database.db"
+    SECRET_KEY: str = "super-secret-key"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+settings = Settings()

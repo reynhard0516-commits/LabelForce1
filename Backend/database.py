@@ -1,12 +1,13 @@
-from sqlmodel import SQLModel, create_engine, Session
-from config import DATABASE_URL
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, declarative_base
+from config import settings
 
-# Sync engine (Render works well with this)
-engine = create_engine(DATABASE_URL, echo=False)
+DATABASE_URL = settings.DATABASE_URL
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+engine = create_async_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+Base = declarative_base()
 
-def get_session():
-    with Session(engine) as session:
-        yield session
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

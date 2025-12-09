@@ -1,9 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlmodel
 sqlalchemy
 asyncpg
-python-dotenv
 pydantic-settings
 passlib[bcrypt]
-pyjwt
+python-jose[cryptography]
+python-dotenv
+aiofiles
+typing-extensions

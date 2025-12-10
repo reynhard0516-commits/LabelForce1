@@ -1,78 +1,53 @@
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from database import create_db_and_tables, get_session
-from models import User
+from fastapi import FastAPI
 from sqlmodel import select
-import uvicorn
+from sqlalchemy.ext.asyncio import AsyncSession
 
-app = FastAPI()
+from config import settings
+from database import create_db_and_tables, AsyncSessionLocal   # matches your database.py
+from models import User
+from auth import hash_password  # you already imported this in previous screenshots
+from routers.users import router as users_router  # matches your repo import shown earlier
 
-# ---------------------------
-# CORS (allow all for testing)
-# ---------------------------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="LabelForce Backend")
 
-# ---------------------------
-# Run DB table creation on startup
-# ---------------------------
+# include your users router (assumes routers/users.py exists and exports `router`)
+app.include_router(users_router)
+
+
 @app.on_event("startup")
 async def on_startup():
+    """
+    Create database tables and ensure an admin user exists.
+    This will only create the admin if it is not already present (Option A).
+    """
+    # create tables (uses your create_db_and_tables function)
     await create_db_and_tables()
-    print("Database tables created")
+
+    # ensure admin user exists (only create if not present)
+    admin_email = "admin@labelforce.com"
+    admin_password = "admin"  # change this after first deploy in Render env or via UI
+
+    async with AsyncSessionLocal() as session:  # create a session for checking/creating admin
+        # look up existing admin by email
+        query = select(User).where(User.email == admin_email)
+        result = await session.exec(query)
+        admin = result.first()
+
+        if admin is None:
+            # create admin user (only if not found)
+            new_admin = User(
+                email=admin_email,
+                hashed_password=hash_password(admin_password),
+                is_admin=True,
+            )
+            session.add(new_admin)
+            await session.commit()
+            app.logger = getattr(app, "logger", None)
+            print(f"[startup] Created admin user: {admin_email}")
+        else:
+            print(f"[startup] Admin user already exists: {admin_email}")
 
 
-# ---------------------------
-# Example route: get all users
-# ---------------------------
-@app.get("/users")
-async def get_users(session: AsyncSession = Depends(get_session)):
-    result = await session.exec(select(User))
-    return result.all()
-
-
-# ---------------------------
-# Example route: create a test user
-# ---------------------------
-@app.post("/users")
-async def create_user(email: str, password: str, session: AsyncSession = Depends(get_session)):
-    # Check if user exists
-    result = await session.exec(select(User).where(User.email == email))
-    existing = result.first()
-
-    if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
-
-    new_user = User(
-        email=email,
-        hashed_password=password,   # ⚠️  You must hash passwords in real apps
-        is_admin=False
-    )
-
-    session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
-
-    return new_user
-
-
-# ---------------------------
-# Root route
-# ---------------------------
 @app.get("/")
 async def root():
-    return {"message": "LabelForce Backend Running!"}
-
-
-# ---------------------------
-# Render runs uvicorn automatically,
-# but this allows local testing
-# ---------------------------
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    return {"status": "ok"}

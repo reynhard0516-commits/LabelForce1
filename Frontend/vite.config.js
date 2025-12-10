@@ -3,10 +3,10 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  build: {
-    outDir: "dist"
+  preview: {
+    allowedHosts: [
+      "labelforce-frontend-5oaq.onrender.com",  // ADD THIS
+    ],
+    port: 10000,
   },
-  server: {
-    port: 5173
-  }
 });

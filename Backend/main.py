@@ -1,16 +1,14 @@
-import asyncio
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import create_db_and_tables, get_session
-from models import User
-from auth import hash_password, get_current_user
-from routers.users import router as users_router
 from config import settings
+from database import create_db_and_tables, get_session, AsyncSessionLocal
+from models import User
+from auth import hash_password
+from routers.users import router as users_router
 
 app = FastAPI(title="LabelForce Backend")
-
 app.include_router(users_router)
 
 @app.on_event("startup")
@@ -18,8 +16,8 @@ async def on_startup():
     # create tables
     await create_db_and_tables()
 
-    # auto-create admin user if missing
-    async with (await get_session().__aenter__()) as session:  # use the generator's session
+    # auto-create admin if missing
+    async with AsyncSessionLocal() as session:   # open an async session directly
         q = select(User).where(User.email == "admin@labelforce.com")
         res = await session.exec(q)
         admin = res.first()

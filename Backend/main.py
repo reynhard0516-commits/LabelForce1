@@ -1,35 +1,19 @@
 # Backend/main.py
 from fastapi import FastAPI
 from routers.users import router as users_router
-from database import create_db_and_tables, get_session
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
-import asyncio
-
-from auth import hash_password
-from models import User
+from database import create_db_and_tables
 from config import settings
+import asyncio
 
 app = FastAPI(title="LabelForce Backend")
 
 app.include_router(users_router)
 
-
 @app.on_event("startup")
 async def on_startup():
-    # create DB tables
+    # create tables (and optionally drop them if RESET_DB=True)
     await create_db_and_tables()
 
-    # create admin user if not exists
-    async with get_session() as session:  # returns an async context manager (AsyncSession)
-        q = select(User).where(User.email == "admin@labelforce.com")
-        result = await session.exec(q)
-        admin = result.first()
-        if not admin:
-            admin_user = User(
-                email="admin@labelforce.com",
-                hashed_password=hash_password("Alex@0516!"),  # change if you want
-                is_admin=True
-            )
-            session.add(admin_user)
-            await session.commit()
+@app.get("/")
+async def root():
+    return {"message": "LabelForce backend running"}

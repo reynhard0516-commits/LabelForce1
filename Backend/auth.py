@@ -1,48 +1,40 @@
-from datetime import datetime, timedelta
-from jose import jwt, JWTError
 from passlib.context import CryptContext
+from datetime import datetime, timedelta
+import jwt
 from fastapi import HTTPException, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
-from .models import User
-from .schemas import TokenData
-from .database import get_session
+from database import get_session
+from models import User
 
-SECRET_KEY = "supersecret"
+SECRET_KEY = "CHANGE_ME"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2 = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def hash_password(password: str):
     return pwd_context.hash(password)
 
-def verify_password(password: str, hashed: str):
-    return pwd_context.verify(password, hashed)
+def verify_password(raw: str, hashed: str):
+    return pwd_context.verify(raw, hashed)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
+    to_encode["exp"] = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(
-    token: str = Depends(lambda x: x.headers.get("Authorization").split(" ")[1]),
-    session: AsyncSession = Depends(get_session)
-):
+async def get_current_user(token: str = Depends(oauth2), session=Depends(get_session)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
+        email = payload.get("sub")
+    except:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    q = select(User).where(User.email == email)
-    res = await session.execute(q)
-    user = res.scalar_one_or_none()
-
+    result = await session.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     return user

@@ -1,46 +1,31 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-from database import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from models import User
+# Backend/auth.py
+import os
+from datetime import datetime, timedelta
+from typing import Optional
 
-SECRET_KEY = "supersecret"
-ALGORITHM = "HS256"
+from jose import jwt
+from passlib.context import CryptContext
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+# secret and algo come from env; set these on Render
+SECRET_KEY = os.getenv("SECRET_KEY", "change_me_secret")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60*24*7").split("*")[0]) \
+    if "*" in os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "") else int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))
 
-
-def create_access_token(email: str):
-    return jwt.encode({"sub": email}, SECRET_KEY, algorithm=ALGORITHM)
-
-
-def hash_password(password: str):
-    import bcrypt
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def verify_password(password: str, hashed_password: str):
-    import bcrypt
-    return bcrypt.checkpw(password.encode(), hashed_password.encode())
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_session)
-):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
-    q = select(User).where(User.email == email)
-    res = await session.execute(q)
-    user = res.first()
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return user[0]
+def create_access_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
+    if expires_delta is None:
+        expires_delta = timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080)))
+    to_encode = {"sub": subject, "exp": datetime.utcnow() + expires_delta}
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt

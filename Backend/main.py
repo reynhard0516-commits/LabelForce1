@@ -17,17 +17,18 @@ async def on_startup():
 
     async with AsyncSessionLocal() as session:
         from sqlmodel import select
-        q = select(User).where(User.email == "admin@labelforce.com")
-        res = await session.exec(q)
-        admin = res.first()
+
+        query = select(User).where(User.email == "admin@labelforce.com")
+        result = await session.exec(query)
+        admin = result.first()
 
         if not admin:
-            admin_user = User(
+            admin = User(
                 email="admin@labelforce.com",
-                hashed_password=hash_password("Admin1234!"),
-                is_admin=True,
+                hashed_password=hash_password("Admin123!"),  # short password
+                is_admin=True
             )
-            session.add(admin_user)
+            session.add(admin)
             await session.commit()
 
 @app.get("/")

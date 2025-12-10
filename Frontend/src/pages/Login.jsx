@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { login } from "../db";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -6,28 +7,37 @@ export default function Login() {
 
   async function handleLogin(e) {
     e.preventDefault();
-    
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
 
-    if (!res.ok) {
+    try {
+      const data = await login(email, password);
+
+      // Save token
+      localStorage.setItem("token", data.access_token);
+
+      alert("Logged in!");
+    } catch (err) {
       alert("Invalid login");
-      return;
+      console.error(err);
     }
-
-    const data = await res.json();
-    localStorage.setItem("token", data.access_token);
-    alert("Logged in!");
   }
 
   return (
     <form onSubmit={handleLogin}>
       <h2>Login</h2>
-      <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
+
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
       <button>Login</button>
     </form>
   );

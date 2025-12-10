@@ -10,3 +10,4 @@ python-dotenv
 aiofiles
 typing-extensions
 email-validator
+psycopg2-binary

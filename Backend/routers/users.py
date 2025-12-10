@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import User
 from schemas import UserCreate, Token
-from auth import hash_password, verify_password, create_access_token
+from auth import hash_password, verify_password, create_access_token, get_current_user
 from database import get_session
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -32,6 +32,5 @@ async def login(data: UserCreate, session: AsyncSession = Depends(get_session)):
     return {"access_token": token, "token_type": "bearer"}
 
 @router.get("/me")
-async def me(current_user: User = Depends(lambda token = Depends: None)):
-    # This is a placeholder — to use current_user dependency, import get_current_user
-    return {"message": "use /auth/me with auth header"}
+async def me(current_user: User = Depends(get_current_user)):
+    return {"email": current_user.email, "is_admin": current_user.is_admin}

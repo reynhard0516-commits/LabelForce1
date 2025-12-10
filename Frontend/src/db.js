@@ -1,23 +1,36 @@
-// Read backend URL from Render environment variable
-export const API = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Example API call
-export async function login(username, password) {
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
+// Generic request function
+export async function apiRequest(endpoint, method = "GET", data = null) {
+  const options = {
+    method,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+  };
+
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+
+  const res = await fetch(`${API_URL}${endpoint}`, options);
 
   if (!res.ok) {
-    throw new Error("Login failed");
+    throw new Error(`API error: ${res.status}`);
   }
 
   return await res.json();
 }
 
-// Another example
-export async function getProjects() {
-  const res = await fetch(`${API}/projects`);
-  return res.json();
+// LOGIN request
+export function login(email, password) {
+  return apiRequest("/login", "POST", { email, password });
 }
+
+// REGISTER request (optional)
+export function register(email, password) {
+  return apiRequest("/register", "POST", { email, password });
+}
+
+export default {
+  login,
+  register,
+};

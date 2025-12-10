@@ -28,7 +28,7 @@ async def on_startup():
         if not admin:
             admin_user = User(
                 email="admin@labelforce.com",
-                hashed_password=hash_password("Admin123!"),  # change if you want
+                hashed_password=hash_password("Alex@0516!"),  # change if you want
                 is_admin=True
             )
             session.add(admin_user)

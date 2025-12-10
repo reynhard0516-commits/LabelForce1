@@ -1,17 +1,14 @@
 services:
   - type: web
     name: labelforce-backend
-    rootDir: Backend
     env: python
-    buildCommand: pip install -r Backend/requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-
-  - type: web
-    name: labelforce-frontend
-    rootDir: Frontend
-    env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm run preview -- --host --port $PORT
+    buildCommand: |
+      cd Backend
+      pip install -r requirements.txt
+    startCommand: |
+      uvicorn Backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: VITE_API_URL
-        value: "https://labelforce-backend.onrender.com"
+      - key: DATABASE_URL
+        sync: false
+      - key: RESET_DB
+        value: "true"

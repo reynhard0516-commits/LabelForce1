@@ -7,3 +7,4 @@ passlib[bcrypt]
 python-jose
 asyncpg
 sqlalchemy
+PyJWT==2.8.0

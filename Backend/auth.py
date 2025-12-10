@@ -22,4 +22,24 @@ def verify_password(plain: str, hashed: str):
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(token: str = Depends(oauth2_scheme), session=Depends(get_session)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        token_data = TokenData(sub=email)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    q = select(User).where(User.email == token_data.sub)
+    result = await session.execute(q)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user

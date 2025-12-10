@@ -13,11 +13,12 @@ app.include_router(users_router)
 
 @app.on_event("startup")
 async def on_startup():
+    from sqlmodel import select
+    from database import AsyncSessionLocal
+
     await create_db_and_tables()
 
     async with AsyncSessionLocal() as session:
-        from sqlmodel import select
-
         query = select(User).where(User.email == "admin@labelforce.com")
         result = await session.exec(query)
         admin = result.first()
@@ -25,7 +26,7 @@ async def on_startup():
         if not admin:
             admin = User(
                 email="admin@labelforce.com",
-                hashed_password=hash_password("Admin123!"),  # short password
+                hashed_password=hash_password("Password123"),
                 is_admin=True
             )
             session.add(admin)

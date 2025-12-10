@@ -1,8 +1,9 @@
 fastapi
 uvicorn
 sqlmodel
-SQLAlchemy>=1.4
-asyncpg
+pydantic[email]
+python-dotenv
 passlib[bcrypt]
-python-jose[cryptography]
-pydantic-settings
+python-jose
+asyncpg
+sqlalchemy

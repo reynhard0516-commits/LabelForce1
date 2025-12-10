@@ -13,14 +13,14 @@ app.include_router(users_router)
 
 @app.on_event("startup")
 async def on_startup():
-    # create tables
     await create_db_and_tables()
 
-    # auto-create admin if missing
-    async with AsyncSessionLocal() as session:   # open an async session directly
+    async with AsyncSessionLocal() as session:
+        from sqlmodel import select
         q = select(User).where(User.email == "admin@labelforce.com")
         res = await session.exec(q)
         admin = res.first()
+
         if not admin:
             admin_user = User(
                 email="admin@labelforce.com",

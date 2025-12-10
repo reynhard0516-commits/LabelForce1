@@ -1,14 +1,7 @@
-# Backend/config.py
-from pydantic_settings import BaseSettings
+import os
 
-class Settings(BaseSettings):
-    DATABASE_URL: str
-    SECRET_KEY: str = "change_me_secret"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
-    RESET_DB: bool = False  # set to "true" in Render to drop and recreate tables once
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-
-settings = Settings()
+DATABASE_URL = os.getenv("DATABASE_URL")
+RESET_DB = os.getenv("RESET_DB", "false").lower() in ("true", "1", "yes")
+SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60

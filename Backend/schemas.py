@@ -1,3 +1,4 @@
+# Backend/schemas.py
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
@@ -9,7 +10,7 @@ class UserCreate(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str
 
 
 class TokenData(BaseModel):

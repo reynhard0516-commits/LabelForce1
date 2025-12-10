@@ -1,23 +1,29 @@
-# Backend/database.py
-from sqlmodel import SQLModel
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from config import settings
-import asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-# Make sure DATABASE_URL uses async driver: postgresql+asyncpg://...
-engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
+# Load database URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-AsyncSessionLocal = sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
+# Async engine
+engine = create_async_engine(
+    DATABASE_URL,
+    future=True,
+    echo=False
 )
 
-async def create_db_and_tables():
-    # Use run_sync to run metadata operations in sync context
-    async with engine.begin() as conn:
-        if settings.RESET_DB:
-            # Danger: drops all tables — use only when you want a clean DB
-            await conn.run_sync(SQLModel.metadata.drop_all)
-        await conn.run_sync(SQLModel.metadata.create_all)
+# Base model
+Base = declarative_base()
+
+# Session factory
+async_session = sessionmaker(
+    engine,
+    expire_on_commit=False,
+    class_=AsyncSession
+)
+
+
+# Dependency for FastAPI routes
+async def get_session() -> AsyncSession:
+    async with async_session() as session:
+        yield session

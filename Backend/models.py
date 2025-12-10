@@ -1,6 +1,8 @@
-lfrom sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.sql import func
-from .database import Base
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import declarative_base
+from datetime import datetime
+
+Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
@@ -9,4 +11,4 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)

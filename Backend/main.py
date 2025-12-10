@@ -1,27 +1,16 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+from routers.users import router as users_router
 
-from .routers.users import router as users_router
-from .database import init_db
-
-app = FastAPI(title="LabelForce API")
-
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI()
 
 @app.on_event("startup")
-async def startup_event():
-    await init_db()
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-# Register routes
 app.include_router(users_router)
 
 @app.get("/")
-def root():
-    return {"status": "Backend running"}
+def home():
+    return {"message": "Backend running"}

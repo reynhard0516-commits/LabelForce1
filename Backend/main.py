@@ -2,12 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from Backend.routers import users as users_router
+from Backend.routers.users import router as users_router
 from Backend.database import init_db
+from Backend.config import RESET_DB
 
 app = FastAPI(title="LabelForce Backend")
 
-origins = os.getenv("CORS_ORIGINS", "*").split(",")
+origins = ["*"]  # You can restrict later
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,9 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users_router.router)
+app.include_router(users_router)
 
 @app.on_event("startup")
 async def startup_event():
-    reset = os.getenv("RESET_DB", "false").lower() in ("1", "true", "yes")
-    await init_db(drop_first=reset)
+    await init_db(drop_first=RESET_DB)

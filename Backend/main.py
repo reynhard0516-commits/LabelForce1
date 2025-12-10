@@ -1,53 +1,35 @@
+# Backend/main.py
 from fastapi import FastAPI
-from sqlmodel import select
+from routers.users import router as users_router
+from database import create_db_and_tables, get_session
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
+import asyncio
 
-from config import settings
-from database import create_db_and_tables, AsyncSessionLocal   # matches your database.py
+from auth import hash_password
 from models import User
-from auth import hash_password  # you already imported this in previous screenshots
-from routers.users import router as users_router  # matches your repo import shown earlier
+from config import settings
 
 app = FastAPI(title="LabelForce Backend")
 
-# include your users router (assumes routers/users.py exists and exports `router`)
 app.include_router(users_router)
 
 
 @app.on_event("startup")
 async def on_startup():
-    """
-    Create database tables and ensure an admin user exists.
-    This will only create the admin if it is not already present (Option A).
-    """
-    # create tables (uses your create_db_and_tables function)
+    # create DB tables
     await create_db_and_tables()
 
-    # ensure admin user exists (only create if not present)
-    admin_email = "admin@labelforce.com"
-    admin_password = "admin"  # change this after first deploy in Render env or via UI
-
-    async with AsyncSessionLocal() as session:  # create a session for checking/creating admin
-        # look up existing admin by email
-        query = select(User).where(User.email == admin_email)
-        result = await session.exec(query)
+    # create admin user if not exists
+    async with get_session() as session:  # returns an async context manager (AsyncSession)
+        q = select(User).where(User.email == "admin@labelforce.com")
+        result = await session.exec(q)
         admin = result.first()
-
-        if admin is None:
-            # create admin user (only if not found)
-            new_admin = User(
-                email=admin_email,
-                hashed_password=hash_password(admin_password),
-                is_admin=True,
+        if not admin:
+            admin_user = User(
+                email="admin@labelforce.com",
+                hashed_password=hash_password("Admin123!"),  # change if you want
+                is_admin=True
             )
-            session.add(new_admin)
+            session.add(admin_user)
             await session.commit()
-            app.logger = getattr(app, "logger", None)
-            print(f"[startup] Created admin user: {admin_email}")
-        else:
-            print(f"[startup] Admin user already exists: {admin_email}")
-
-
-@app.get("/")
-async def root():
-    return {"status": "ok"}

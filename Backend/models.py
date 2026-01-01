@@ -71,3 +71,4 @@ class Annotation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     item = relationship("DataItem", back_populates="annotations")
+datasets = relationship("Dataset", back_populates="owner")

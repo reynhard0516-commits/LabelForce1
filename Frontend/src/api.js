@@ -1,27 +1,26 @@
-const API_URL = import.meta.env.VITE_API_URL;
+// src/api.js
 
-/**
- * Centralized API helper
- */
+const API_URL = import.meta.env.VITE_API_URL
+  || "https://labelforce-backend-5oaq.onrender.com";
+
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem("token");
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
   });
 
-  // Handle expired / invalid token
-  if (response.status === 401) {
-    localStorage.removeItem("token");
-    throw new Error("Unauthorized");
+  // 🚨 Handle HTML / non-JSON errors
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await res.text();
+    throw new Error(`Server error: ${text.slice(0, 100)}`);
   }
 
-  return response;
+  return res;
 }

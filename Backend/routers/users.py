@@ -9,7 +9,7 @@ from auth import (
     verify_password,
     create_access_token,
     get_password_hash,
-    decode_token
+    decode_token,
 )
 
 router = APIRouter(
@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 # =====================================================
-# SCHEMAS (Request Bodies)
+# SCHEMAS
 # =====================================================
 
 class LoginRequest(BaseModel):
@@ -32,7 +32,7 @@ class RegisterRequest(BaseModel):
 
 
 # =====================================================
-# AUTH ROUTES
+# AUTH ROUTES (PUBLIC)
 # =====================================================
 
 @router.post("/login")
@@ -48,7 +48,11 @@ async def login(
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": user.email})
+    # 🔐 JWT now includes ROLE
+    token = create_access_token({
+        "sub": user.email,
+        "role": user.role
+    })
 
     return {
         "access_token": token,
@@ -73,7 +77,8 @@ async def register(
 
     user = User(
         email=data.email,
-        password=hashed_password
+        password=hashed_password,
+        role="user"  # 👈 default role
     )
 
     session.add(user)
@@ -83,7 +88,7 @@ async def register(
 
 
 # =====================================================
-# AUTHENTICATED ROUTES
+# AUTHENTICATED ROUTES (JWT REQUIRED)
 # =====================================================
 
 @router.get("/me")
@@ -106,7 +111,8 @@ async def get_me(
 
     return {
         "id": user.id,
-        "email": user.email
+        "email": user.email,
+        "role": user.role
     }
 
 
@@ -114,5 +120,21 @@ async def get_me(
 async def protected_route(token=Depends(decode_token)):
     return {
         "message": "You are authorized",
+        "user": token["sub"],
+        "role": token["role"]
+    }
+
+
+# =====================================================
+# ADMIN-ONLY ROUTE
+# =====================================================
+
+@router.get("/admin")
+async def admin_only(token=Depends(decode_token)):
+    if token.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    return {
+        "message": "Welcome admin",
         "user": token["sub"]
     }

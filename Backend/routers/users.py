@@ -1,16 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from pydantic import BaseModel
 
 from database import get_session
 from models import User
-from auth import verify_password, create_access_token
+from auth import (
+    verify_password,
+    create_access_token,
+    get_password_hash
+)
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
 
+# -----------------------
+# LOGIN
+# -----------------------
 @router.post("/login")
 async def login(
     email: str,
@@ -30,19 +38,19 @@ async def login(
         "access_token": token,
         "token_type": "bearer"
     }
-from pydantic import BaseModel
 
+# -----------------------
+# REGISTER
+# -----------------------
 class RegisterRequest(BaseModel):
     email: str
     password: str
-
 
 @router.post("/register")
 async def register(
     data: RegisterRequest,
     session: AsyncSession = Depends(get_session)
 ):
-    # Check if user already exists
     result = await session.execute(
         select(User).where(User.email == data.email)
     )
@@ -51,10 +59,8 @@ async def register(
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
 
-    # Hash password
     hashed_password = get_password_hash(data.password)
 
-    # Create user
     user = User(
         email=data.email,
         password=hashed_password
@@ -64,7 +70,10 @@ async def register(
     await session.commit()
 
     return {"message": "User created successfully"}
-    
+
+# -----------------------
+# HEALTH CHECK
+# -----------------------
 @router.get("/ping")
 def ping():
     return {"status": "ok"}

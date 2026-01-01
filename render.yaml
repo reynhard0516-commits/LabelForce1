@@ -2,11 +2,7 @@ services:
   - type: web
     name: labelforce-backend
     env: python
+    plan: starter
     rootDir: Backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: RESET_DB
-        value: "true"

@@ -3,12 +3,17 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database import get_session
+from models import User
 
 # =====================================================
 # SECURITY SETTINGS
 # =====================================================
 
-# ⚠️ Move this to ENV later (Render → Environment)
+# ⚠️ Move to Render ENV later
 SECRET_KEY = "CHANGE_ME_SUPER_SECRET"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -34,7 +39,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict) -> str:
     """
     Create a JWT access token.
-    Expects `sub` (email) and optional `role` in data.
+    Requires: sub (email)
+    Optional: role
     """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -48,14 +54,13 @@ def decode_token(
 ) -> dict:
     """
     Decode and validate JWT from Authorization: Bearer <token>
-    Returns token payload if valid.
+    Returns token payload.
     """
     token = credentials.credentials
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-        # Ensure required claim exists
         if "sub" not in payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -69,3 +74,44 @@ def decode_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
+
+# =====================================================
+# CURRENT USER / PERMISSIONS
+# =====================================================
+
+async def get_current_user(
+    token: dict = Depends(decode_token),
+    session: AsyncSession = Depends(get_session)
+) -> User:
+    """
+    Resolve current user from JWT.
+    """
+    email = token.get("sub")
+
+    result = await session.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
+    return user
+
+
+async def require_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    """
+    Restrict access to admin users only.
+    """
+    if user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+
+    return user

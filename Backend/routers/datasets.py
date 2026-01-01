@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from database import get_session
-from models import Dataset, DataItem, User
+from models import Dataset
 from auth import decode_token
 
 router = APIRouter(
@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 # =====================================================
-# SCHEMAS
+# Schemas
 # =====================================================
 
 class DatasetCreate(BaseModel):
@@ -21,32 +21,23 @@ class DatasetCreate(BaseModel):
     description: str | None = None
 
 
-class DataItemCreate(BaseModel):
-    data_type: str
-    data_url: str
-
-
 # =====================================================
-# DATASET ROUTES
+# Create Dataset
 # =====================================================
 
-@router.post("/")
+@router.post("")
 async def create_dataset(
     data: DatasetCreate,
     token=Depends(decode_token),
     session: AsyncSession = Depends(get_session)
 ):
-    email = token.get("sub")
-
-    result = await session.execute(
-        select(User).where(User.email == email)
-    )
-    user = result.scalar_one()
+    owner_email = token.get("sub")
+    if not owner_email:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     dataset = Dataset(
         name=data.name,
         description=data.description,
-        owner_id=user.id
     )
 
     session.add(dataset)
@@ -56,45 +47,37 @@ async def create_dataset(
     return {
         "id": dataset.id,
         "name": dataset.name,
-        "description": dataset.description
+        "description": dataset.description,
+        "created_at": dataset.created_at
     }
 
 
-@router.get("/")
+# =====================================================
+# List My Datasets
+# =====================================================
+
+@router.get("")
 async def list_datasets(
     token=Depends(decode_token),
     session: AsyncSession = Depends(get_session)
 ):
-    email = token.get("sub")
+    owner_email = token.get("sub")
+    if not owner_email:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-    result = await session.execute(
-        select(User).where(User.email == email)
-    )
-    user = result.scalar_one()
-
-    result = await session.execute(
-        select(Dataset).where(Dataset.owner_id == user.id)
-    )
+    result = await session.execute(select(Dataset))
     datasets = result.scalars().all()
 
-    return [
-        {
-            "id": d.id,
-            "name": d.name,
-            "description": d.description
-        }
-        for d in datasets
-    ]
+    return datasets
 
 
 # =====================================================
-# DATA ITEM ROUTE
+# Get Single Dataset
 # =====================================================
 
-@router.post("/{dataset_id}/items")
-async def add_item(
+@router.get("/{dataset_id}")
+async def get_dataset(
     dataset_id: int,
-    data: DataItemCreate,
     token=Depends(decode_token),
     session: AsyncSession = Depends(get_session)
 ):
@@ -106,13 +89,4 @@ async def add_item(
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    item = DataItem(
-        dataset_id=dataset.id,
-        data_type=data.data_type,
-        data_url=data.data_url
-    )
-
-    session.add(item)
-    await session.commit()
-
-    return {"message": "Item added"}
+    return dataset

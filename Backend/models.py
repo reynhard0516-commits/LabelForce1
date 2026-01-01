@@ -28,9 +28,20 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
 
+    # ✅ REQUIRED (fixes your 500 error)
+    role = Column(String, default="labeler", nullable=False)
+
     # Relationships
-    datasets = relationship("Dataset", back_populates="owner")
-    annotations = relationship("Annotation", back_populates="user")
+    datasets = relationship(
+        "Dataset",
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
+    annotations = relationship(
+        "Annotation",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
 
 # =====================================================
@@ -49,8 +60,16 @@ class Dataset(Base):
 
     # Relationships
     owner = relationship("User", back_populates="datasets")
-    items = relationship("DataItem", back_populates="dataset")
-    labels = relationship("Label", back_populates="dataset")
+    items = relationship(
+        "DataItem",
+        back_populates="dataset",
+        cascade="all, delete-orphan"
+    )
+    labels = relationship(
+        "Label",
+        back_populates="dataset",
+        cascade="all, delete-orphan"
+    )
 
 
 # =====================================================
@@ -70,7 +89,11 @@ class DataItem(Base):
 
     # Relationships
     dataset = relationship("Dataset", back_populates="items")
-    annotations = relationship("Annotation", back_populates="item")
+    annotations = relationship(
+        "Annotation",
+        back_populates="item",
+        cascade="all, delete-orphan"
+    )
 
 
 # =====================================================
@@ -88,7 +111,11 @@ class Label(Base):
 
     # Relationships
     dataset = relationship("Dataset", back_populates="labels")
-    annotations = relationship("Annotation", back_populates="label")
+    annotations = relationship(
+        "Annotation",
+        back_populates="label",
+        cascade="all, delete-orphan"
+    )
 
 
 # =====================================================

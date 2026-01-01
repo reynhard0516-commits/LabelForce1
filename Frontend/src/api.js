@@ -1,26 +1,63 @@
-// src/api.js
+import { useState } from "react";
+import { apiFetch } from "../api";
 
-const API_URL = import.meta.env.VITE_API_URL
-  || "https://labelforce-backend-5oaq.onrender.com";
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-export async function apiFetch(path, options = {}) {
-  const token = localStorage.getItem("token");
+  async function handleLogin(e) {
+    e.preventDefault();
+    setError("");
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
+    try {
+      const API_URL = "https://labelforce-backend-5oaq.onrender.com";
 
-  // 🚨 Handle HTML / non-JSON errors
-  const contentType = res.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
-    const text = await res.text();
-    throw new Error(`Server error: ${text.slice(0, 100)}`);
+const res = await fetch(`${API_URL}/auth/login`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ email, password }),
+});
+        
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail || "Login failed");
+        return;
+      }
+
+      // ✅ Save token
+      localStorage.setItem("token", data.access_token);
+
+      alert("Logged in!");
+    } catch (err) {
+      setError(err.message || "Network error");
+    }
   }
 
-  return res;
+  return (
+    <form onSubmit={handleLogin}>
+      <h2>Login</h2>
+
+      <input
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+
+      <input
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+
+      <button type="submit">Login</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+    </form>
+  );
 }

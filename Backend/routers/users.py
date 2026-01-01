@@ -1,23 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from database import get_session
 from models import User
-from auth import verify_password, create_access_token, get_password_hash
+from auth import (
+    verify_password,
+    create_access_token,
+    get_password_hash,
+    decode_token
+)
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
 
-security = HTTPBearer()
-
-# ------------------------
-# Schemas
-# ------------------------
+# =====================================================
+# SCHEMAS (Request Bodies)
+# =====================================================
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -29,9 +31,9 @@ class RegisterRequest(BaseModel):
     password: str
 
 
-# ------------------------
-# Login
-# ------------------------
+# =====================================================
+# AUTH ROUTES
+# =====================================================
 
 @router.post("/login")
 async def login(
@@ -54,16 +56,11 @@ async def login(
     }
 
 
-# ------------------------
-# Register
-# ------------------------
-
 @router.post("/register")
 async def register(
     data: RegisterRequest,
     session: AsyncSession = Depends(get_session)
 ):
-    # Check if user exists
     result = await session.execute(
         select(User).where(User.email == data.email)
     )
@@ -85,14 +82,37 @@ async def register(
     return {"message": "User created successfully"}
 
 
-# ------------------------
-# Protected test route
-# ------------------------
+# =====================================================
+# AUTHENTICATED ROUTES
+# =====================================================
 
-@router.get("/protected")
-async def protected_route(token=Depends(security)):
+@router.get("/me")
+async def get_me(
+    token=Depends(decode_token),
+    session: AsyncSession = Depends(get_session)
+):
+    email = token.get("sub")
+
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    result = await session.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return {
-        "message": "You are authorized",
-        "token": token.credentials
+        "id": user.id,
+        "email": user.email
     }
 
+
+@router.get("/protected")
+async def protected_route(token=Depends(decode_token)):
+    return {
+        "message": "You are authorized",
+        "user": token["sub"]
+    }

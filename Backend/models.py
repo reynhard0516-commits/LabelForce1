@@ -27,8 +27,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-
-    role = Column(String, default="user")  # 👈 ADD THIS
+    role = Column(String, default="user")  # user | admin
 
     datasets = relationship("Dataset", back_populates="owner")
     annotations = relationship("Annotation", back_populates="user")

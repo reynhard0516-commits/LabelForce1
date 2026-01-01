@@ -8,3 +8,4 @@ python-jose
 asyncpg
 sqlalchemy
 PyJWT==2.8.0
+python-multipart

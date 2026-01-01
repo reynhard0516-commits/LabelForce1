@@ -1,13 +1,27 @@
-import { apiRequest } from "../api";
+import { apiFetch } from "../api";
 
 export async function login(email, password) {
-  return apiRequest("/auth/login", "POST", { email, password });
+  const res = await apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+  return res.json();
 }
 
 export async function register(email, password) {
-  return apiRequest("/auth/register", "POST", { email, password });
+  const res = await apiFetch("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+  return res.json();
 }
 
-export async function getMe(token) {
-  return apiRequest("/auth/me", "GET", null, token);
+export async function getMe() {
+  const res = await apiFetch("/auth/me", {
+    method: "GET",
+  });
+
+  return res.json();
 }

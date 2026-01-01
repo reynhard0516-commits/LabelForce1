@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+from fastapi.security import HTTPBearer
 from database import engine
 from models import Base
 from routers.users import router as users_router
+
+security = HTTPBearer()
 
 app = FastAPI(
     title="LabelForce API",
@@ -15,7 +18,6 @@ async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-# ✅ ROUTERS MUST BE INCLUDED HERE (GLOBAL SCOPE)
 app.include_router(users_router)
 
 @app.get("/")

@@ -31,13 +31,24 @@ async def create_dataset(
     token=Depends(decode_token),
     session: AsyncSession = Depends(get_session)
 ):
-    owner_email = token.get("sub")
-    if not owner_email:
+    email = token.get("sub")
+    if not email:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    # Find user
+    result = await session.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Create dataset WITH owner_id
     dataset = Dataset(
         name=data.name,
         description=data.description,
+        owner_id=user.id
     )
 
     session.add(dataset)
@@ -48,9 +59,8 @@ async def create_dataset(
         "id": dataset.id,
         "name": dataset.name,
         "description": dataset.description,
-        "created_at": dataset.created_at
+        "owner_id": dataset.owner_id
     }
-
 
 # =====================================================
 # List My Datasets
@@ -61,11 +71,16 @@ async def list_datasets(
     token=Depends(decode_token),
     session: AsyncSession = Depends(get_session)
 ):
-    owner_email = token.get("sub")
-    if not owner_email:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    email = token.get("sub")
 
-    result = await session.execute(select(Dataset))
+    result = await session.execute(
+        select(User).where(User.email == email)
+    )
+    user = result.scalar_one()
+
+    result = await session.execute(
+        select(Dataset).where(Dataset.owner_id == user.id)
+    )
     datasets = result.scalars().all()
 
     return datasets

@@ -89,9 +89,10 @@ async def register(
 # Protected test route
 # ------------------------
 
-@router.get("/me")
-async def read_me(token=Depends(security)):
+@router.get("/protected")
+async def protected_route(token=Depends(security)):
     return {
         "message": "You are authorized",
-        "token_received": token.credentials
+        "token": token.credentials
     }
+

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "../api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -7,21 +8,16 @@ export default function Login() {
 
   async function handleLogin(e) {
     e.preventDefault();
+    setError("");
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const res = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
       const data = await res.json();
 
@@ -35,25 +31,30 @@ export default function Login() {
 
       alert("Logged in!");
     } catch (err) {
-      setError("Network error");
+      setError(err.message || "Network error");
     }
   }
 
   return (
     <form onSubmit={handleLogin}>
+      <h2>Login</h2>
+
       <input
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="Email"
       />
+
       <input
         type="password"
         value={password}
         onChange={e => setPassword(e.target.value)}
         placeholder="Password"
       />
+
       <button type="submit">Login</button>
-      {error && <p style={{color:"red"}}>{error}</p>}
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
     </form>
   );
 }

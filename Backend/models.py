@@ -1,8 +1,37 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    Text
+)
+from sqlalchemy.orm import DeclarativeBase, relationship
 
-from database import Base
+# =====================================================
+# BASE
+# =====================================================
+
+class Base(DeclarativeBase):
+    pass
+
+
+# =====================================================
+# USER
+# =====================================================
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+
+    # Relationships
+    datasets = relationship("Dataset", back_populates="owner")
+    annotations = relationship("Annotation", back_populates="user")
+
 
 # =====================================================
 # DATASET
@@ -16,33 +45,36 @@ class Dataset(Base):
     description = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    # Relationships
     owner = relationship("User", back_populates="datasets")
     items = relationship("DataItem", back_populates="dataset")
+    labels = relationship("Label", back_populates="dataset")
 
 
 # =====================================================
-# DATA ITEM (image / text / etc.)
+# DATA ITEM (image / text / video / etc.)
 # =====================================================
 
 class DataItem(Base):
     __tablename__ = "data_items"
 
     id = Column(Integer, primary_key=True)
-    dataset_id = Column(Integer, ForeignKey("datasets.id"))
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
 
-    data_type = Column(String)  # image, text, video, etc.
-    data_url = Column(Text)     # file path or URL
+    data_type = Column(String, nullable=False)   # image, text, video
+    data_url = Column(Text, nullable=False)      # path or URL
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Relationships
     dataset = relationship("Dataset", back_populates="items")
     annotations = relationship("Annotation", back_populates="item")
 
 
 # =====================================================
-# LABEL (class/category)
+# LABEL (class / category)
 # =====================================================
 
 class Label(Base):
@@ -52,23 +84,29 @@ class Label(Base):
     name = Column(String, nullable=False)
     color = Column(String)
 
-    dataset_id = Column(Integer, ForeignKey("datasets.id"))
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
+
+    # Relationships
+    dataset = relationship("Dataset", back_populates="labels")
+    annotations = relationship("Annotation", back_populates="label")
 
 
 # =====================================================
-# ANNOTATION (user label)
+# ANNOTATION (user-generated label)
 # =====================================================
 
 class Annotation(Base):
     __tablename__ = "annotations"
 
     id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey("data_items.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    label_id = Column(Integer, ForeignKey("labels.id"))
+    item_id = Column(Integer, ForeignKey("data_items.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    label_id = Column(Integer, ForeignKey("labels.id"), nullable=False)
 
-    value = Column(Text)  # bounding box, text label, JSON, etc.
+    value = Column(Text)  # bbox, polygon, text, JSON
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Relationships
     item = relationship("DataItem", back_populates="annotations")
-datasets = relationship("Dataset", back_populates="owner")
+    user = relationship("User", back_populates="annotations")
+    label = relationship("Label", back_populates="annotations")

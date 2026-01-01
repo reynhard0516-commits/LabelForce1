@@ -1,11 +1,7 @@
 fastapi
 uvicorn
-sqlmodel
-pydantic[email]
-python-dotenv
-passlib[bcrypt]
-python-jose
-asyncpg
 sqlalchemy
-PyJWT==2.8.0
-python-multipart
+asyncpg
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.1.2

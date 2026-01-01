@@ -28,20 +28,10 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
 
-    # ✅ REQUIRED (fixes your 500 error)
-    role = Column(String, default="labeler", nullable=False)
+    role = Column(String, default="user")  # 👈 ADD THIS
 
-    # Relationships
-    datasets = relationship(
-        "Dataset",
-        back_populates="owner",
-        cascade="all, delete-orphan"
-    )
-    annotations = relationship(
-        "Annotation",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
+    datasets = relationship("Dataset", back_populates="owner")
+    annotations = relationship("Annotation", back_populates="user")
 
 
 # =====================================================

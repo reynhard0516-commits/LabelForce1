@@ -5,11 +5,7 @@ from pydantic import BaseModel
 
 from database import get_session
 from models import User
-from auth import (
-    verify_password,
-    create_access_token,
-    get_password_hash
-)
+from auth import get_password_hash, verify_password, create_access_token
 
 router = APIRouter(
     prefix="/auth",

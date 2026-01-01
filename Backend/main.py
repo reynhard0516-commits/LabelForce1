@@ -3,7 +3,11 @@ from database import engine
 from models import Base
 from routers.users import router as users_router
 
-app = FastAPI()
+app = FastAPI(
+    title="LabelForce API",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 @app.on_event("startup")
 async def startup():

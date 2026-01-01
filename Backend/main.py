@@ -6,7 +6,8 @@ from routers.users import router as users_router
 app = FastAPI(
     title="LabelForce API",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 @app.on_event("startup")

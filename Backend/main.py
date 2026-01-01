@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer
 from database import engine
 from models import Base
 from routers.users import router as users_router
+from routers.datasets import router as datasets_router
 
 security = HTTPBearer()
 
@@ -19,6 +20,7 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
 
 app.include_router(users_router)
+app.include_router(datasets_router)
 
 @app.get("/")
 def home():

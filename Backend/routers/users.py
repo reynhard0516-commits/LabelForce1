@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,6 +12,8 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
+
+security = HTTPBearer()
 
 # ------------------------
 # Schemas
@@ -80,3 +83,15 @@ async def register(
     await session.commit()
 
     return {"message": "User created successfully"}
+
+
+# ------------------------
+# Protected test route
+# ------------------------
+
+@router.get("/me")
+async def read_me(token=Depends(security)):
+    return {
+        "message": "You are authorized",
+        "token_received": token.credentials
+    }

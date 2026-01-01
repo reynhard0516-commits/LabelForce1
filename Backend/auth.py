@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 # SECURITY SETTINGS
 SECRET_KEY = "CHANGE_ME_SUPER_SECRET"
 ALGORITHM = "HS256"

@@ -24,3 +24,7 @@ async def login(
 
     token = create_access_token({"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+    
+@router.get("/ping")
+def ping():
+    return {"status": "ok"}

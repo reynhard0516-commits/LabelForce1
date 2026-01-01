@@ -11,7 +11,11 @@ router = APIRouter(
 )
 
 @router.post("/login")
-async def login(email: str, password: str, session: AsyncSession = Depends(get_session)):
+async def login(
+    email: str,
+    password: str,
+    session: AsyncSession = Depends(get_session)
+):
     result = await session.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 

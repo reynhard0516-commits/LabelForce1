@@ -15,6 +15,7 @@ async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+# ✅ ROUTERS MUST BE INCLUDED HERE (GLOBAL SCOPE)
 app.include_router(users_router)
 
 @app.get("/")

@@ -30,7 +30,41 @@ async def login(
         "access_token": token,
         "token_type": "bearer"
     }
+from pydantic import BaseModel
 
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/register")
+async def register(
+    data: RegisterRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    # Check if user already exists
+    result = await session.execute(
+        select(User).where(User.email == data.email)
+    )
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    # Hash password
+    hashed_password = get_password_hash(data.password)
+
+    # Create user
+    user = User(
+        email=data.email,
+        password=hashed_password
+    )
+
+    session.add(user)
+    await session.commit()
+
+    return {"message": "User created successfully"}
+    
 @router.get("/ping")
 def ping():
     return {"status": "ok"}

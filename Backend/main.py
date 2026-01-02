@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from database import engine
 from models import Base
 
@@ -16,6 +18,21 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"
+)
+
+# =====================================================
+# ✅ CORS (REQUIRED FOR FRONTEND)
+# =====================================================
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://labelforce-frontend-5oaq.onrender.com",
+        "http://localhost:5173",  # optional, for local dev
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # =====================================================

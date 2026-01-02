@@ -19,7 +19,7 @@ export async function apiFetch(path, options = {}) {
   const contentType = res.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
     const text = await res.text();
-    throw new Error(`Server error: ${text.slice(0, 100)}`);
+    throw new Error(text || "Server error");
   }
 
   return res;

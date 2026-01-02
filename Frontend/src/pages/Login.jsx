@@ -19,7 +19,7 @@ export default function Login() {
       }
 
       localStorage.setItem("token", data.access_token);
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     } catch (err) {
       setError("Login failed");
     }

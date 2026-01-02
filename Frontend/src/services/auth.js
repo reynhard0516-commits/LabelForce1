@@ -1,5 +1,8 @@
 import { apiFetch } from "../api";
 
+/* ============================
+   Internal response handler
+============================ */
 async function handleResponse(res) {
   if (!res.ok) {
     let message = "Request failed";
@@ -9,14 +12,19 @@ async function handleResponse(res) {
     } catch {}
     throw new Error(message);
   }
+
   return res.json();
 }
 
+/* ============================
+   Auth API calls
+============================ */
 export async function login(email, password) {
   const res = await apiFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+
   return handleResponse(res);
 }
 
@@ -25,6 +33,7 @@ export async function register(email, password) {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+
   return handleResponse(res);
 }
 
@@ -33,7 +42,14 @@ export async function getMe() {
   return handleResponse(res);
 }
 
+/* ============================
+   Auth helpers
+============================ */
+export function isLoggedIn() {
+  return !!localStorage.getItem("token");
+}
+
 export function logout() {
   localStorage.removeItem("token");
-  window.location.href = "/";
+  window.location.href = "/login";
 }

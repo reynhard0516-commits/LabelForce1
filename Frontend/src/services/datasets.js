@@ -5,9 +5,5 @@ export async function getMyDatasets() {
     method: "GET",
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to load datasets");
-  }
-
   return res.json();
 }

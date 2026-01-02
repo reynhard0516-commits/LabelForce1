@@ -1,11 +1,10 @@
 import { apiFetch } from "../api";
 
-export async function getMe() {
-  const res = await apiFetch("/auth/me");
-
-  if (!res.ok) {
-    throw new Error("Not authenticated");
-  }
+export async function login(email, password) {
+  const res = await apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 
   return res.json();
 }
@@ -20,9 +19,11 @@ export async function register(email, password) {
 }
 
 export async function getMe() {
-  const res = await apiFetch("/auth/me", {
-    method: "GET",
-  });
-
+  const res = await apiFetch("/auth/me");
   return res.json();
+}
+
+export function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "/";
 }

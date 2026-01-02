@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Datasets from "./pages/Datasets";
-import { isLoggedIn } from "./auth";
+import { isLoggedIn } from "./services/auth";
 
 function ProtectedRoute({ children }) {
   if (!isLoggedIn()) {
@@ -17,7 +17,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-
         <Route
           path="/"
           element={
@@ -26,6 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

@@ -1,10 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
+import { getMe } from "../services/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
+
+  // 🔁 AUTO-CHECK LOGIN ON PAGE LOAD
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const me = await getMe();
+        setUser(me);
+      } catch {
+        localStorage.removeItem("token");
+        setUser(null);
+      }
+    }
+    checkAuth();
+  }, []);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -13,10 +29,7 @@ export default function Login() {
     try {
       const res = await apiFetch("/auth/login", {
         method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -26,13 +39,28 @@ export default function Login() {
         return;
       }
 
-      // ✅ Save token
       localStorage.setItem("token", data.access_token);
 
-      alert("Logged in!");
+      // 🔁 fetch user immediately
+      const me = await getMe();
+      setUser(me);
+
     } catch (err) {
       setError(err.message || "Network error");
     }
+  }
+
+  // ======================
+  // UI
+  // ======================
+
+  if (user) {
+    return (
+      <div>
+        <h2>Logged in ✅</h2>
+        <p>Email: {user.email}</p>
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,3 @@
-// src/api.js
-
 const API_URL =
   import.meta.env.VITE_API_URL ||
   "https://labelforce-backend-5oaq.onrender.com";
@@ -11,15 +9,14 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers || {}),
     },
   });
 
-  const contentType = res.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
+  if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Server error");
+    throw new Error(text || "Request failed");
   }
 
   return res;

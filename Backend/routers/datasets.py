@@ -1,47 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
+from sqlalchemy.future import select
 
-from database import get_session
+from database import get_db
 from models.dataset import Dataset
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 
-# -----------------------------
-# Simple auth helper (temporary)
-# -----------------------------
-def get_user_id(authorization: str | None):
-    if not authorization:
+def get_user_id(auth: str | None):
+    if not auth or not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    token = authorization.replace("Bearer ", "")
-    return int(token)  # works with your current frontend
+    return int(auth.replace("Bearer ", ""))
 
 
-# -----------------------------
-# Request schemas
-# -----------------------------
-class DatasetCreate(BaseModel):
-    name: str
-    description: str | None = None
-
-
-# -----------------------------
-# Routes
-# -----------------------------
 @router.get("/")
 async def get_datasets(
     authorization: str = Header(None),
-    session: AsyncSession = Depends(get_session),
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = get_user_id(authorization)
-
-    result = await session.execute(
+    result = await db.execute(
         select(Dataset).where(Dataset.owner_id == user_id)
     )
     return result.scalars().all()
@@ -49,20 +28,19 @@ async def get_datasets(
 
 @router.post("/")
 async def create_dataset(
-    data: DatasetCreate,
+    payload: dict,
     authorization: str = Header(None),
-    session: AsyncSession = Depends(get_session),
+    db: AsyncSession = Depends(get_db),
 ):
     user_id = get_user_id(authorization)
 
     dataset = Dataset(
-        name=data.name,
-        description=data.description,
+        name=payload["name"],
+        description=payload.get("description"),
         owner_id=user_id,
     )
 
-    session.add(dataset)
-    await session.commit()
-    await session.refresh(dataset)
-
+    db.add(dataset)
+    await db.commit()
+    await db.refresh(dataset)
     return dataset

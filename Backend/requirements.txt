@@ -1,8 +1,9 @@
 fastapi
 uvicorn
-sqlalchemy
-asyncpg
-python-jose[cryptography]
+sqlalchemy>=2.0
+aiosqlite
+python-multipart
+pydantic
 passlib[bcrypt]
 bcrypt==4.1.2
 email-validator

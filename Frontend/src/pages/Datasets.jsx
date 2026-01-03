@@ -71,15 +71,16 @@ export default function Datasets() {
         <p>No datasets yet</p>
       ) : (
         <ul>
-          {datasets.map(ds => (
-            <li key={ds.id} style={{ marginBottom: 10 }}>
-              <Link to={`/datasets/${ds.id}`}>
-                <strong>{ds.name}</strong>
-              </Link>
-              {ds.description && <p>{ds.description}</p>}
-            </li>
-          ))}
-        </ul>
+  {datasets.map(ds => (
+    <li key={ds.id}>
+      <a href={`/datasets/${ds.id}`}>
+        <strong>{ds.name}</strong>
+      </a>
+      <br />
+      {ds.description}
+    </li>
+  ))}
+</ul>
       )}
 
       <button onClick={logout}>Logout</button>

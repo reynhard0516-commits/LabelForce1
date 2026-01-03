@@ -4,6 +4,7 @@ from database import Base
 class DataItem(Base):
     __tablename__ = "data_items"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
-    content = Column(String, nullable=False)
+    type = Column(String, default="text")
+    content = Column(String)

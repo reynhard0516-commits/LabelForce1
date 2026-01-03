@@ -1,54 +1,52 @@
 import { apiFetch } from "../api";
 
-/* ============================
-   Internal response handler
-============================ */
-async function handleResponse(res) {
-  if (!res.ok) {
-    let message = "Request failed";
-    try {
-      const err = await res.json();
-      message = err.detail || message;
-    } catch {}
-    throw new Error(message);
-  }
-
-  return res.json();
+/**
+ * Returns true if a token exists
+ */
+export function isLoggedIn() {
+  return Boolean(localStorage.getItem("token"));
 }
 
-/* ============================
-   Auth API calls
-============================ */
+/**
+ * Login user
+ */
 export async function login(email, password) {
   const res = await apiFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
 
-  return handleResponse(res);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Login failed");
+  }
+
+  const data = await res.json();
+
+  if (!data.access_token) {
+    throw new Error("Invalid login response");
+  }
+
+  localStorage.setItem("token", data.access_token);
+  return data;
 }
 
-export async function register(email, password) {
-  const res = await apiFetch("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-
-  return handleResponse(res);
-}
-
+/**
+ * Get current user
+ */
 export async function getMe() {
   const res = await apiFetch("/auth/me");
-  return handleResponse(res);
+
+  if (!res.ok) {
+    throw new Error("Not authenticated");
+  }
+
+  return res.json();
 }
 
-/* ============================
-   Auth helpers
-============================ */
-export function isLoggedIn() {
-  return !!localStorage.getItem("token");
-}
-
+/**
+ * Logout
+ */
 export function logout() {
   localStorage.removeItem("token");
   window.location.href = "/login";

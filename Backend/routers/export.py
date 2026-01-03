@@ -175,3 +175,94 @@ async def export_yolo(
         yolo.setdefault(item.data_url, []).append(line)
 
     return yolo
+    import io
+import zipfile
+import json
+import os
+
+from fastapi.responses import StreamingResponse
+
+@router.get("/{dataset_id}/zip")
+async def export_zip(
+    dataset_id: int,
+    token=Depends(decode_token),
+    session: AsyncSession = Depends(get_session)
+):
+    dataset = await session.get(Dataset, dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    items = (await session.execute(
+        select(DataItem).where(DataItem.dataset_id == dataset_id)
+    )).scalars().all()
+
+    labels = (await session.execute(
+        select(Label).where(Label.dataset_id == dataset_id)
+    )).scalars().all()
+
+    annotations = (await session.execute(
+        select(Annotation)
+        .join(DataItem)
+        .where(DataItem.dataset_id == dataset_id)
+    )).scalars().all()
+
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+
+        # -----------------
+        # Labels
+        # -----------------
+        zipf.writestr(
+            "labels.json",
+            json.dumps(
+                [{"id": l.id, "name": l.name, "color": l.color} for l in labels],
+                indent=2,
+            ),
+        )
+
+        # -----------------
+        # Items + Annotations
+        # -----------------
+        for item in items:
+            item_annotations = [
+                a for a in annotations if a.item_id == item.id
+            ]
+
+            # Annotation JSON
+            zipf.writestr(
+                f"annotations/item_{item.id}.json",
+                json.dumps(
+                    {
+                        "item_id": item.id,
+                        "type": item.data_type,
+                        "annotations": [
+                            {
+                                "label_id": a.label_id,
+                                "value": a.value,
+                            }
+                            for a in item_annotations
+                        ],
+                    },
+                    indent=2,
+                ),
+            )
+
+            # Images (if image item)
+            if item.data_type == "image":
+                file_path = item.data_url.replace("/uploads/", "uploads/")
+                if os.path.exists(file_path):
+                    zipf.write(
+                        file_path,
+                        arcname=f"images/{os.path.basename(file_path)}",
+                    )
+
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={dataset.name}.zip"
+        },
+    )

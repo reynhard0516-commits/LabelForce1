@@ -22,6 +22,9 @@ export default function DatasetDetail() {
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState("");
 
+  // =========================
+  // Load dataset data
+  // =========================
   async function load() {
     try {
       const ds = await getDataset(id);
@@ -105,7 +108,7 @@ export default function DatasetDetail() {
   }
 
   // =========================
-  // Export dataset
+  // Export dataset (JSON)
   // =========================
   async function handleExport() {
     try {
@@ -155,8 +158,8 @@ export default function DatasetDetail() {
       </form>
 
       <ul>
-        {labels.map(l => (
-          <li key={l.id}>{l.name}</li>
+        {labels.map(label => (
+          <li key={label.id}>{label.name}</li>
         ))}
       </ul>
 
@@ -209,7 +212,6 @@ export default function DatasetDetail() {
                       })
                     }
                   />
-
                   <AnnotationList
                     itemId={item.id}
                     labels={labels}

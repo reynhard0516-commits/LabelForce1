@@ -1,45 +1,39 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from passlib.context import CryptContext
-
-from Backend.database import get_db
-from Backend.models.user import User
+from database import get_db
+from models.user import User
+import hashlib
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 @router.post("/register")
 async def register(email: str, password: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == email))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    if result.scalar():
+        raise HTTPException(status_code=400, detail="User already exists")
 
     user = User(
         email=email,
         hashed_password=hash_password(password),
     )
-
     db.add(user)
     await db.commit()
-    await db.refresh(user)
-
-    return {"id": user.id, "email": user.email}
+    return {"message": "User created"}
 
 
 @router.post("/login")
 async def login(email: str, password: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    user = result.scalar()
 
-    if not user or not pwd_context.verify(password, user.hashed_password):
+    if not user or user.hashed_password != hash_password(password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # ⚠️ simple token for now (frontend already works)
+    # TEMP SIMPLE TOKEN (we upgrade to JWT next)
     return {"access_token": str(user.id)}

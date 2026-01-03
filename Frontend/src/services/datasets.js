@@ -67,3 +67,16 @@ export async function createDataset(name, description) {
 
   return res.json();
 }
+/**
+ * Get a single dataset by ID
+ */
+export async function getDataset(datasetId) {
+  const res = await apiFetch(`/datasets/${datasetId}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load dataset");
+  }
+
+  return res.json();
+}

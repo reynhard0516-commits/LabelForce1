@@ -1,8 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Datasets from "./pages/Datasets";
+import DatasetDetail from "./pages/DatasetDetail";
 import { isLoggedIn } from "./services/auth";
 
 function ProtectedRoute({ children }) {
@@ -16,7 +18,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
+        {/* Public */}
         <Route path="/login" element={<Login />} />
+
+        {/* Protected */}
         <Route
           path="/"
           element={
@@ -25,6 +30,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/datasets/:id"
+          element={
+            <ProtectedRoute>
+              <DatasetDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

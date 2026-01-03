@@ -5,7 +5,12 @@ import { getDataset } from "../services/datasets";
 import { getItems, createItem, uploadImage } from "../services/dataItems";
 import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
-import { exportDataset, exportCOCO, exportYOLO } from "../services/export";
+import {
+  exportDataset,
+  exportCOCO,
+  exportYOLO,
+  exportZIP,
+} from "../services/export";
 
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
@@ -108,12 +113,21 @@ export default function DatasetDetail() {
   }
 
   // =========================
-  // Download helper
+  // Download helpers
   // =========================
   function downloadJSON(data, filename) {
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
     });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadZIP(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -140,6 +154,15 @@ export default function DatasetDetail() {
     downloadJSON(data, `${dataset.name}_yolo.json`);
   }
 
+  async function handleExportZIP() {
+    try {
+      const blob = await exportZIP(id);
+      downloadZIP(blob, `${dataset.name}.zip`);
+    } catch (err) {
+      alert(err.message || "ZIP export failed");
+    }
+  }
+
   if (!dataset) return <p>Loading…</p>;
 
   return (
@@ -152,7 +175,8 @@ export default function DatasetDetail() {
       <h3>Export</h3>
       <button onClick={handleExportRaw}>⬇ Raw JSON</button>{" "}
       <button onClick={handleExportCOCO}>🧠 COCO</button>{" "}
-      <button onClick={handleExportYOLO}>🎯 YOLO</button>
+      <button onClick={handleExportYOLO}>🎯 YOLO</button>{" "}
+      <button onClick={handleExportZIP}>📦 ZIP</button>
 
       {/* ================= LABELS ================= */}
       <hr />

@@ -5,9 +5,10 @@ from sqlalchemy import (
     String,
     ForeignKey,
     DateTime,
-    Text
+    Text,
+    JSON,
 )
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import relationship, DeclarativeBase
 
 # =====================================================
 # BASE
@@ -15,7 +16,6 @@ from sqlalchemy.orm import DeclarativeBase, relationship
 
 class Base(DeclarativeBase):
     pass
-
 
 # =====================================================
 # USER
@@ -27,11 +27,9 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(String, default="user")  # user | admin
 
-    datasets = relationship("Dataset", back_populates="owner")
-    annotations = relationship("Annotation", back_populates="user")
-
+    datasets = relationship("Dataset", back_populates="owner", cascade="all, delete")
+    annotations = relationship("Annotation", back_populates="user", cascade="all, delete")
 
 # =====================================================
 # DATASET
@@ -47,22 +45,12 @@ class Dataset(Base):
 
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # Relationships
     owner = relationship("User", back_populates="datasets")
-    items = relationship(
-        "DataItem",
-        back_populates="dataset",
-        cascade="all, delete-orphan"
-    )
-    labels = relationship(
-        "Label",
-        back_populates="dataset",
-        cascade="all, delete-orphan"
-    )
-
+    items = relationship("DataItem", back_populates="dataset", cascade="all, delete")
+    labels = relationship("Label", back_populates="dataset", cascade="all, delete")
 
 # =====================================================
-# DATA ITEM (image / text / video / etc.)
+# DATA ITEM (text / image / video)
 # =====================================================
 
 class DataItem(Base):
@@ -71,22 +59,16 @@ class DataItem(Base):
     id = Column(Integer, primary_key=True)
     dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
 
-    data_type = Column(String, nullable=False)   # image, text, video
-    data_url = Column(Text, nullable=False)      # path or URL
+    data_type = Column(String, nullable=False)  # text, image, video
+    data_url = Column(Text, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships
     dataset = relationship("Dataset", back_populates="items")
-    annotations = relationship(
-        "Annotation",
-        back_populates="item",
-        cascade="all, delete-orphan"
-    )
-
+    annotations = relationship("Annotation", back_populates="item", cascade="all, delete")
 
 # =====================================================
-# LABEL (class / category)
+# LABEL
 # =====================================================
 
 class Label(Base):
@@ -98,31 +80,25 @@ class Label(Base):
 
     dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
 
-    # Relationships
     dataset = relationship("Dataset", back_populates="labels")
-    annotations = relationship(
-        "Annotation",
-        back_populates="label",
-        cascade="all, delete-orphan"
-    )
-
+    annotations = relationship("Annotation", back_populates="label", cascade="all, delete")
 
 # =====================================================
-# ANNOTATION (user-generated label)
+# ANNOTATION
 # =====================================================
 
 class Annotation(Base):
     __tablename__ = "annotations"
 
     id = Column(Integer, primary_key=True)
-    item_id = Column(Integer, ForeignKey("data_items.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    label_id = Column(Integer, ForeignKey("labels.id"), nullable=False)
 
-    value = Column(Text)  # bbox, polygon, text, JSON
+    item_id = Column(Integer, ForeignKey("data_items.id"), nullable=False)
+    label_id = Column(Integer, ForeignKey("labels.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    value = Column(JSON)  # bbox, polygon, text, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships
     item = relationship("DataItem", back_populates="annotations")
-    user = relationship("User", back_populates="annotations")
     label = relationship("Label", back_populates="annotations")
+    user = relationship("User", back_populates="annotations")

@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 sqlalchemy>=2.0
+asyncpg
 aiosqlite
 python-multipart
 pydantic

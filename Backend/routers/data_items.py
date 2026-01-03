@@ -1,96 +1,51 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from pydantic import BaseModel
+from sqlalchemy.future import select
 
-from database import get_session
-from models import DataItem, Dataset, User
-from auth import decode_token
+from database import get_db
+from models.data_item import DataItem
+from models.dataset import Dataset
+from schemas.data_item import DataItemCreate, DataItemOut
+from auth.dependencies import get_current_user
 
-router = APIRouter(
-    prefix="/datasets/{dataset_id}/items",
-    tags=["data_items"]
-)
+router = APIRouter(prefix="/datasets/{dataset_id}/items", tags=["data items"])
 
-# =========================
-# Schemas
-# =========================
-
-class DataItemCreate(BaseModel):
-    data_type: str   # image, text, video
-    data_url: str
-
-# =========================
-# List items in dataset
-# =========================
-
-@router.get("")
+@router.get("/", response_model=list[DataItemOut])
 async def list_items(
     dataset_id: int,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session),
+    db: AsyncSession = Depends(get_db),
+    user=Depends(get_current_user),
 ):
-    email = token["sub"]
-
-    user = (
-        await session.execute(select(User).where(User.email == email))
-    ).scalar_one()
-
-    dataset = (
-        await session.execute(
-            select(Dataset).where(
-                Dataset.id == dataset_id,
-                Dataset.owner_id == user.id
-            )
-        )
-    ).scalar_one_or_none()
-
-    if not dataset:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
-    result = await session.execute(
+    result = await db.execute(
         select(DataItem).where(DataItem.dataset_id == dataset_id)
     )
-
     return result.scalars().all()
 
-# =========================
-# Create item
-# =========================
-
-@router.post("")
+@router.post("/", response_model=DataItemOut)
 async def create_item(
     dataset_id: int,
-    data: DataItemCreate,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session),
+    item: DataItemCreate,
+    db: AsyncSession = Depends(get_db),
+    user=Depends(get_current_user),
 ):
-    email = token["sub"]
-
-    user = (
-        await session.execute(select(User).where(User.email == email))
-    ).scalar_one()
-
-    dataset = (
-        await session.execute(
-            select(Dataset).where(
-                Dataset.id == dataset_id,
-                Dataset.owner_id == user.id
-            )
+    # ensure dataset exists and belongs to user
+    result = await db.execute(
+        select(Dataset).where(
+            Dataset.id == dataset_id,
+            Dataset.owner_id == user.id
         )
-    ).scalar_one_or_none()
+    )
+    dataset = result.scalar_one_or_none()
 
     if not dataset:
         raise HTTPException(status_code=404, detail="Dataset not found")
 
-    item = DataItem(
+    db_item = DataItem(
         dataset_id=dataset_id,
-        data_type=data.data_type,
-        data_url=data.data_url,
+        content=item.content,
     )
+    db.add(db_item)
+    await db.commit()
+    await db.refresh(db_item)
 
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
-
-    return item
+    return db_item

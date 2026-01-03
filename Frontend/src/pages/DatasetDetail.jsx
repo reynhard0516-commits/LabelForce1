@@ -5,7 +5,7 @@ import { getDataset } from "../services/datasets";
 import { getItems, createItem, uploadImage } from "../services/dataItems";
 import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
-import { exportDataset } from "../services/export";
+import { exportDataset, exportCOCO, exportYOLO } from "../services/export";
 
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
@@ -23,7 +23,7 @@ export default function DatasetDetail() {
   const [error, setError] = useState("");
 
   // =========================
-  // Load dataset data
+  // Load dataset
   // =========================
   async function load() {
     try {
@@ -60,7 +60,7 @@ export default function DatasetDetail() {
   }
 
   // =========================
-  // Upload image item
+  // Upload image
   // =========================
   async function handleUpload(e) {
     e.preventDefault();
@@ -108,28 +108,36 @@ export default function DatasetDetail() {
   }
 
   // =========================
-  // Export dataset (JSON)
+  // Download helper
   // =========================
-  async function handleExport() {
-    try {
-      const data = await exportDataset(id);
+  function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-      const blob = new Blob(
-        [JSON.stringify(data, null, 2)],
-        { type: "application/json" }
-      );
+  // =========================
+  // Export handlers
+  // =========================
+  async function handleExportRaw() {
+    const data = await exportDataset(id);
+    downloadJSON(data, `${dataset.name}_raw.json`);
+  }
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+  async function handleExportCOCO() {
+    const data = await exportCOCO(id);
+    downloadJSON(data, `${dataset.name}_coco.json`);
+  }
 
-      a.href = url;
-      a.download = `${dataset.name}.json`;
-      a.click();
-
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert(err.message || "Export failed");
-    }
+  async function handleExportYOLO() {
+    const data = await exportYOLO(id);
+    downloadJSON(data, `${dataset.name}_yolo.json`);
   }
 
   if (!dataset) return <p>Loading…</p>;
@@ -139,14 +147,16 @@ export default function DatasetDetail() {
       <h1>{dataset.name}</h1>
       <p>{dataset.description}</p>
 
-      <button onClick={handleExport}>
-        ⬇ Export Dataset (JSON)
-      </button>
+      {/* ================= EXPORT ================= */}
+      <hr />
+      <h3>Export</h3>
+      <button onClick={handleExportRaw}>⬇ Raw JSON</button>{" "}
+      <button onClick={handleExportCOCO}>🧠 COCO</button>{" "}
+      <button onClick={handleExportYOLO}>🎯 YOLO</button>
 
       {/* ================= LABELS ================= */}
       <hr />
       <h3>Create Label</h3>
-
       <form onSubmit={handleAddLabel}>
         <input
           value={newLabel}
@@ -154,19 +164,18 @@ export default function DatasetDetail() {
           placeholder="Label name"
           required
         />
-        <button>Create Label</button>
+        <button>Create</button>
       </form>
 
       <ul>
-        {labels.map(label => (
-          <li key={label.id}>{label.name}</li>
+        {labels.map(l => (
+          <li key={l.id}>{l.name}</li>
         ))}
       </ul>
 
       {/* ================= ITEMS ================= */}
       <hr />
       <h3>Add Text Item</h3>
-
       <form onSubmit={handleAddItem}>
         <textarea
           value={text}
@@ -175,12 +184,11 @@ export default function DatasetDetail() {
           required
         />
         <br />
-        <button>Add Item</button>
+        <button>Add</button>
       </form>
 
       <hr />
       <h3>Upload Image</h3>
-
       <form onSubmit={handleUpload}>
         <input
           type="file"
@@ -191,7 +199,7 @@ export default function DatasetDetail() {
         <button>Upload</button>
       </form>
 
-      {/* ================= ITEM LIST ================= */}
+      {/* ================= ITEMS LIST ================= */}
       <hr />
       <h3>Items</h3>
 
@@ -212,32 +220,22 @@ export default function DatasetDetail() {
                       })
                     }
                   />
-                  <AnnotationList
-                    itemId={item.id}
-                    labels={labels}
-                  />
+                  <AnnotationList itemId={item.id} labels={labels} />
                 </>
               ) : (
                 <>
                   <strong>{item.data_type}</strong>: {item.data_url}
                   <br />
-
                   {labels.map(label => (
                     <button
                       key={label.id}
-                      onClick={() =>
-                        handleAnnotate(item.id, label.id)
-                      }
+                      onClick={() => handleAnnotate(item.id, label.id)}
                       style={{ marginRight: 5 }}
                     >
                       {label.name}
                     </button>
                   ))}
-
-                  <AnnotationList
-                    itemId={item.id}
-                    labels={labels}
-                  />
+                  <AnnotationList itemId={item.id} labels={labels} />
                 </>
               )}
             </li>

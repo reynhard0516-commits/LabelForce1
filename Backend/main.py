@@ -10,7 +10,9 @@ from routers.data_items import router as data_items_router
 from routers.labels import router as labels_router
 from routers.annotations import router as annotations_router
 from routers.export import router as export_router  # ✅ ADD THIS
+from routers.ai import router as ai_router
 
+app.include_router(ai_router)
 app = FastAPI(title="LabelForce API")
 
 # =====================================================

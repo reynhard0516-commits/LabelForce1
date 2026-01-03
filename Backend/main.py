@@ -1,14 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
 
-from Backend.database import engine, Base
-from Backend.routers.users import router as users_router
-from Backend.routers.datasets import router as datasets_router
+from routers.users import router as users_router
+from routers.datasets import router as datasets_router
 
-app = FastAPI(
-    title="LabelForce API",
-    version="1.0.0",
-)
+app = FastAPI(title="LabelForce API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,5 +30,5 @@ app.include_router(datasets_router)
 
 
 @app.get("/")
-def home():
-    return {"message": "LabelForce backend running 🚀"}
+def health():
+    return {"status": "LabelForce backend running 🚀"}

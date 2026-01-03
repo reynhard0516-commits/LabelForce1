@@ -3,13 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
 
+# Routers
 from routers.users import router as users_router
 from routers.datasets import router as datasets_router
 from routers.data_items import router as data_items_router
 from routers.labels import router as labels_router
 from routers.annotations import router as annotations_router
+from routers.export import router as export_router  # ✅ ADD THIS
 
 app = FastAPI(title="LabelForce API")
+
+# =====================================================
+# CORS
+# =====================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,19 +28,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =====================================================
+# Startup: create tables
+# =====================================================
 
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+# =====================================================
+# Routers
+# =====================================================
 
-app.include_router(users_router, prefix="/auth")
-app.include_router(datasets_router)
-app.include_router(data_items_router)
-app.include_router(labels_router)
-app.include_router(annotations_router)
+app.include_router(users_router, prefix="/auth", tags=["auth"])
+app.include_router(datasets_router, tags=["datasets"])
+app.include_router(data_items_router, tags=["items"])
+app.include_router(labels_router, tags=["labels"])
+app.include_router(annotations_router, tags=["annotations"])
+app.include_router(export_router, tags=["export"])  # ✅ EXPORT ENABLED
 
+# =====================================================
+# Health check
+# =====================================================
 
 @app.get("/")
 def health():

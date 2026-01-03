@@ -1,29 +1,23 @@
 import { apiFetch } from "../api";
 
-/**
- * Get all items in a dataset
- */
-export async function getDataItems(datasetId) {
+export async function getItems(datasetId) {
   const res = await apiFetch(`/datasets/${datasetId}/items`);
 
   if (!res.ok) {
-    throw new Error("Failed to load data items");
+    throw new Error("Failed to load items");
   }
 
   return res.json();
 }
 
-/**
- * Create a new data item
- */
-export async function createDataItem(datasetId, data_type, data_url) {
+export async function createItem(datasetId, data_type, data_value) {
   const res = await apiFetch(`/datasets/${datasetId}/items`, {
     method: "POST",
-    body: JSON.stringify({ data_type, data_url }),
+    body: JSON.stringify({ data_type, data_value }),
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create data item");
+    throw new Error("Failed to create item");
   }
 
   return res.json();

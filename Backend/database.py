@@ -12,7 +12,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///./labelforce.db"  # fallback for local dev
+    "sqlite+aiosqlite:///./labelforce.db"  # local fallback
 )
 
 # =====================================================
@@ -22,6 +22,7 @@ DATABASE_URL = os.getenv(
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
+    future=True,
 )
 
 # =====================================================
@@ -34,7 +35,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 # =====================================================
-# BASE
+# BASE (used by models)
 # =====================================================
 
 class Base(DeclarativeBase):

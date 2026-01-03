@@ -1,9 +1,5 @@
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
-    AsyncSession,
-)
-from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = "sqlite+aiosqlite:///./labelforce.db"
 
@@ -12,13 +8,15 @@ engine = create_async_engine(
     echo=False,
 )
 
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    expire_on_commit=False,
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
     class_=AsyncSession,
+    expire_on_commit=False,
 )
 
-# ✅ THIS WAS MISSING
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+Base = declarative_base()
+
+
+async def get_db():
     async with AsyncSessionLocal() as session:
         yield session

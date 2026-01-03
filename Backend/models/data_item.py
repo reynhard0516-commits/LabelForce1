@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from database import Base
 
 class DataItem(Base):
@@ -6,5 +7,8 @@ class DataItem(Base):
 
     id = Column(Integer, primary_key=True)
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
-    type = Column(String, default="text")
-    content = Column(String)
+    data_type = Column(String)
+    data_url = Column(String)
+
+    dataset = relationship("Dataset", back_populates="items")
+    annotations = relationship("Annotation", back_populates="item")

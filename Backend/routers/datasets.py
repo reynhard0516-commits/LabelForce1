@@ -1,44 +1,68 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from database import get_db
+from sqlalchemy import select
+from pydantic import BaseModel
+
+from database import get_session
 from models.dataset import Dataset
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 
+# -----------------------------
+# Simple auth helper (temporary)
+# -----------------------------
 def get_user_id(authorization: str | None):
     if not authorization:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return int(authorization.replace("Bearer ", ""))
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    token = authorization.replace("Bearer ", "")
+    return int(token)  # works with your current frontend
 
 
+# -----------------------------
+# Request schemas
+# -----------------------------
+class DatasetCreate(BaseModel):
+    name: str
+    description: str | None = None
+
+
+# -----------------------------
+# Routes
+# -----------------------------
 @router.get("/")
 async def get_datasets(
     authorization: str = Header(None),
-    db: AsyncSession = Depends(get_db),
+    session: AsyncSession = Depends(get_session),
 ):
     user_id = get_user_id(authorization)
-    result = await db.execute(select(Dataset).where(Dataset.owner_id == user_id))
+
+    result = await session.execute(
+        select(Dataset).where(Dataset.owner_id == user_id)
+    )
     return result.scalars().all()
 
 
 @router.post("/")
 async def create_dataset(
-    name: str,
-    description: str | None = None,
+    data: DatasetCreate,
     authorization: str = Header(None),
-    db: AsyncSession = Depends(get_db),
+    session: AsyncSession = Depends(get_session),
 ):
     user_id = get_user_id(authorization)
 
     dataset = Dataset(
-        name=name,
-        description=description,
+        name=data.name,
+        description=data.description,
         owner_id=user_id,
     )
 
-    db.add(dataset)
-    await db.commit()
-    await db.refresh(dataset)
+    session.add(dataset)
+    await session.commit()
+    await session.refresh(dataset)
+
     return dataset

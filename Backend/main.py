@@ -6,7 +6,9 @@ from routers.users import router as users_router
 from routers.datasets import router as datasets_router
 
 app = FastAPI(title="LabelForce API")
+from fastapi.staticfiles import StaticFiles
 
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

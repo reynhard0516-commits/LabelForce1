@@ -9,10 +9,13 @@ from routers.datasets import router as datasets_router
 from routers.data_items import router as data_items_router
 from routers.labels import router as labels_router
 from routers.annotations import router as annotations_router
-from routers.export import router as export_router  # ✅ ADD THIS
+from routers.export import router as export_router
 from routers.ai import router as ai_router
 
-app.include_router(ai_router)
+# =====================================================
+# App
+# =====================================================
+
 app = FastAPI(title="LabelForce API")
 
 # =====================================================
@@ -48,7 +51,8 @@ app.include_router(datasets_router, tags=["datasets"])
 app.include_router(data_items_router, tags=["items"])
 app.include_router(labels_router, tags=["labels"])
 app.include_router(annotations_router, tags=["annotations"])
-app.include_router(export_router, tags=["export"])  # ✅ EXPORT ENABLED
+app.include_router(export_router, tags=["export"])
+app.include_router(ai_router, tags=["ai"])
 
 # =====================================================
 # Health check

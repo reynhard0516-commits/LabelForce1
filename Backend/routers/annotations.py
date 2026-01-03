@@ -1,78 +1,46 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy.future import select
+from database import get_db
+from models.annotation import Annotation
 
-from database import get_session
-from models import Annotation, DataItem, Label, User
-from auth import decode_token
-
-router = APIRouter(
-    prefix="/items/{item_id}/annotations",
-    tags=["annotations"]
-)
-
-class AnnotationCreate(BaseModel):
-    label_id: int
-    value: str
+router = APIRouter(prefix="/annotations", tags=["annotations"])
 
 
-@router.post("")
+def get_user_id(auth: str | None):
+    if not auth:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return int(auth.replace("Bearer ", ""))
+
+
+@router.get("/{item_id}")
+async def get_annotations(
+    item_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    res = await db.execute(
+        select(Annotation).where(Annotation.data_item_id == item_id)
+    )
+    return res.scalars().all()
+
+
+@router.post("/{item_id}")
 async def create_annotation(
     item_id: int,
-    data: AnnotationCreate,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session)
+    label_id: int,
+    data: dict,
+    authorization: str = Header(None),
+    db: AsyncSession = Depends(get_db),
 ):
-    email = token["sub"]
+    get_user_id(authorization)
 
-    user = (
-        await session.execute(
-            select(User).where(User.email == email)
-        )
-    ).scalar_one()
-
-    item = (
-        await session.execute(
-            select(DataItem).where(DataItem.id == item_id)
-        )
-    ).scalar_one_or_none()
-
-    if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    label = (
-        await session.execute(
-            select(Label).where(Label.id == data.label_id)
-        )
-    ).scalar_one_or_none()
-
-    if not label:
-        raise HTTPException(status_code=404, detail="Label not found")
-
-    annotation = Annotation(
-        item_id=item_id,
-        user_id=user.id,
-        label_id=label.id,
-        value=data.value
+    ann = Annotation(
+        data_item_id=item_id,
+        label_id=label_id,
+        data=data,
     )
 
-    session.add(annotation)
-    await session.commit()
-    await session.refresh(annotation)
-
-    return annotation
-
-
-@router.get("")
-async def list_annotations(
-    item_id: int,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session)
-):
-    await decode_token(token)
-
-    result = await session.execute(
-        select(Annotation).where(Annotation.item_id == item_id)
-    )
-    return result.scalars().all()
+    db.add(ann)
+    await db.commit()
+    await db.refresh(ann)
+    return ann

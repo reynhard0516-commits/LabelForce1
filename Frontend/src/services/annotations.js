@@ -24,3 +24,15 @@ export async function createAnnotation(itemId, labelId, data) {
   if (!res.ok) throw new Error("Failed to create annotation");
   return res.json();
 }
+
+/**
+ * Delete annotation
+ */
+export async function deleteAnnotation(annotationId) {
+  const res = await apiFetch(`/annotations/${annotationId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete annotation");
+  return true;
+}

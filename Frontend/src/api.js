@@ -9,14 +9,16 @@ export async function apiFetch(path, options = {}) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Request failed");
+  // 🔒 Auto logout on invalid token
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+    throw new Error("Session expired");
   }
 
   return res;

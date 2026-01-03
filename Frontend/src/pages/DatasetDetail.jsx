@@ -5,6 +5,7 @@ import { getDataset } from "../services/datasets";
 import { getItems, createItem, uploadImage } from "../services/dataItems";
 import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
+import { exportDataset } from "../services/export";
 
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
@@ -103,12 +104,41 @@ export default function DatasetDetail() {
     }
   }
 
+  // =========================
+  // Export dataset
+  // =========================
+  async function handleExport() {
+    try {
+      const data = await exportDataset(id);
+
+      const blob = new Blob(
+        [JSON.stringify(data, null, 2)],
+        { type: "application/json" }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = `${dataset.name}.json`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message || "Export failed");
+    }
+  }
+
   if (!dataset) return <p>Loading…</p>;
 
   return (
     <div>
       <h1>{dataset.name}</h1>
       <p>{dataset.description}</p>
+
+      <button onClick={handleExport}>
+        ⬇ Export Dataset (JSON)
+      </button>
 
       {/* ================= LABELS ================= */}
       <hr />
@@ -180,7 +210,10 @@ export default function DatasetDetail() {
                     }
                   />
 
-                  <AnnotationList itemId={item.id} labels={labels} />
+                  <AnnotationList
+                    itemId={item.id}
+                    labels={labels}
+                  />
                 </>
               ) : (
                 <>
@@ -190,14 +223,19 @@ export default function DatasetDetail() {
                   {labels.map(label => (
                     <button
                       key={label.id}
-                      onClick={() => handleAnnotate(item.id, label.id)}
+                      onClick={() =>
+                        handleAnnotate(item.id, label.id)
+                      }
                       style={{ marginRight: 5 }}
                     >
                       {label.name}
                     </button>
                   ))}
 
-                  <AnnotationList itemId={item.id} labels={labels} />
+                  <AnnotationList
+                    itemId={item.id}
+                    labels={labels}
+                  />
                 </>
               )}
             </li>

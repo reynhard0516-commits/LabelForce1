@@ -1,139 +1,51 @@
-import os
-import uuid
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy.future import select
 
-from database import get_session
-from models import DataItem, Dataset, User
-from auth import decode_token
+from database import get_db
+from models.data_item import DataItem
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+router = APIRouter(prefix="/items", tags=["items"])
 
-router = APIRouter(
-    prefix="/datasets/{dataset_id}/items",
-    tags=["data-items"]
-)
 
-# ============================
-# Create TEXT item
-# ============================
+def get_user_id(authorization: str | None):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return int(authorization.replace("Bearer ", ""))
 
-@router.post("/text")
-async def create_text_item(
+
+@router.get("/{dataset_id}")
+async def get_items(
     dataset_id: int,
-    text: str,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session)
+    authorization: str = Header(None),
+    db: AsyncSession = Depends(get_db),
 ):
-    email = token["sub"]
+    get_user_id(authorization)
 
-    user = (
-        await session.execute(
-            select(User).where(User.email == email)
-        )
-    ).scalar_one()
-
-    dataset = (
-        await session.execute(
-            select(Dataset).where(Dataset.id == dataset_id)
-        )
-    ).scalar_one_or_none()
-
-    if not dataset or dataset.owner_id != user.id:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
-    item = DataItem(
-        dataset_id=dataset_id,
-        data_type="text",
-        data_url=text
-    )
-
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
-
-    return item
-
-
-# ============================
-# Create IMAGE item
-# ============================
-
-@router.post("/image")
-async def create_image_item(
-    dataset_id: int,
-    file: UploadFile = File(...),
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session)
-):
-    email = token["sub"]
-
-    user = (
-        await session.execute(
-            select(User).where(User.email == email)
-        )
-    ).scalar_one()
-
-    dataset = (
-        await session.execute(
-            select(Dataset).where(Dataset.id == dataset_id)
-        )
-    ).scalar_one_or_none()
-
-    if not dataset or dataset.owner_id != user.id:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
-    ext = os.path.splitext(file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
-    with open(filepath, "wb") as buffer:
-        buffer.write(await file.read())
-
-    item = DataItem(
-        dataset_id=dataset_id,
-        data_type="image",
-        data_url=f"/uploads/{filename}"
-    )
-
-    session.add(item)
-    await session.commit()
-    await session.refresh(item)
-
-    return item
-
-
-# ============================
-# List items
-# ============================
-
-@router.get("")
-async def list_items(
-    dataset_id: int,
-    token=Depends(decode_token),
-    session: AsyncSession = Depends(get_session)
-):
-    email = token["sub"]
-
-    user = (
-        await session.execute(
-            select(User).where(User.email == email)
-        )
-    ).scalar_one()
-
-    dataset = (
-        await session.execute(
-            select(Dataset).where(Dataset.id == dataset_id)
-        )
-    ).scalar_one_or_none()
-
-    if not dataset or dataset.owner_id != user.id:
-        raise HTTPException(status_code=404, detail="Dataset not found")
-
-    result = await session.execute(
+    result = await db.execute(
         select(DataItem).where(DataItem.dataset_id == dataset_id)
     )
-
     return result.scalars().all()
+
+
+@router.post("/{dataset_id}")
+async def create_item(
+    dataset_id: int,
+    data_type: str,
+    data_url: str,
+    authorization: str = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    user_id = get_user_id(authorization)
+
+    item = DataItem(
+        dataset_id=dataset_id,
+        data_type=data_type,
+        data_url=data_url,
+        owner_id=user_id,
+    )
+
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return item

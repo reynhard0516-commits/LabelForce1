@@ -1,14 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import engine
-from models import Base
+from database import engine, Base
 
 from routers.users import router as users_router
 from routers.datasets import router as datasets_router
 from routers.data_items import router as data_items_router
 
 app = FastAPI(title="LabelForce API")
+
+# =====================================================
+# CORS
+# =====================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,14 +24,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =====================================================
+# Startup: create DB tables
+# =====================================================
+
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-app.include_router(users_router, prefix="/auth", tags=["auth"])
-app.include_router(datasets_router, prefix="/datasets", tags=["datasets"])
-app.include_router(data_items_router, prefix="/items", tags=["items"])
+# =====================================================
+# Routers
+# IMPORTANT: do NOT add prefixes here
+# =====================================================
+
+app.include_router(users_router)      # /auth/...
+app.include_router(datasets_router)   # /datasets/...
+app.include_router(data_items_router) # /items/...
+
+# =====================================================
+# Health check
+# =====================================================
 
 @app.get("/")
 def health():

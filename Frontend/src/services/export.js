@@ -12,3 +12,8 @@ export async function exportYOLO(datasetId) {
   if (!res.ok) throw new Error("Failed to export YOLO");
   return res.json();
 }
+export async function exportZIP(datasetId) {
+  const res = await apiFetch(`/export/${datasetId}/zip`);
+  if (!res.ok) throw new Error("ZIP export failed");
+  return res.blob();
+}

@@ -1,4 +1,3 @@
-import AnnotationList from "../components/AnnotationList";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
@@ -8,6 +7,7 @@ import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
 
 import ImageAnnotator from "../components/ImageAnnotator";
+import AnnotationList from "../components/AnnotationList";
 
 export default function DatasetDetail() {
   const { id } = useParams();
@@ -97,7 +97,7 @@ export default function DatasetDetail() {
       await createAnnotation(itemId, labelId, {
         value: "selected",
       });
-      alert("Annotation saved");
+      load();
     } catch {
       alert("Failed to save annotation");
     }
@@ -167,21 +167,26 @@ export default function DatasetDetail() {
       ) : (
         <ul>
           {items.map(item => (
-            <li key={item.id} style={{ marginBottom: 20 }}>
+            <li key={item.id} style={{ marginBottom: 30 }}>
               {item.data_type === "image" ? (
-                <ImageAnnotator
-                  imageUrl={item.data_url}
-                  labels={labels}
-                  onSave={data =>
-                    createAnnotation(item.id, data.label_id, {
-                      box: data.box,
-                    })
-                  }
-                />
+                <>
+                  <ImageAnnotator
+                    imageUrl={item.data_url}
+                    labels={labels}
+                    onSave={data =>
+                      createAnnotation(item.id, data.label_id, {
+                        box: data.box,
+                      })
+                    }
+                  />
+
+                  <AnnotationList itemId={item.id} labels={labels} />
+                </>
               ) : (
                 <>
                   <strong>{item.data_type}</strong>: {item.data_url}
                   <br />
+
                   {labels.map(label => (
                     <button
                       key={label.id}
@@ -191,6 +196,8 @@ export default function DatasetDetail() {
                       {label.name}
                     </button>
                   ))}
+
+                  <AnnotationList itemId={item.id} labels={labels} />
                 </>
               )}
             </li>

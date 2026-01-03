@@ -11,7 +11,7 @@ import {
   exportYOLO,
   exportZIP,
 } from "../services/export";
-
+import { autoLabel } from "../services/ai";
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
 
@@ -63,7 +63,11 @@ export default function DatasetDetail() {
       setError(err.message || "Failed to add item");
     }
   }
-
+<button
+  onClick={() => autoLabel(item.id).then(load)}
+>
+  🤖 Auto-Label
+</button>
   // =========================
   // Upload image
   // =========================

@@ -8,10 +8,10 @@ from models.dataset import Dataset
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 
-def get_user_id(auth: str | None):
-    if not auth or not auth.startswith("Bearer "):
+def get_user_id(authorization: str | None):
+    if not authorization:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return int(auth.replace("Bearer ", ""))
+    return int(authorization.replace("Bearer ", ""))
 
 
 @router.get("/")
@@ -20,6 +20,7 @@ async def get_datasets(
     db: AsyncSession = Depends(get_db),
 ):
     user_id = get_user_id(authorization)
+
     result = await db.execute(
         select(Dataset).where(Dataset.owner_id == user_id)
     )
@@ -35,7 +36,7 @@ async def create_dataset(
     user_id = get_user_id(authorization)
 
     dataset = Dataset(
-        name=payload["name"],
+        name=payload.get("name"),
         description=payload.get("description"),
         owner_id=user_id,
     )

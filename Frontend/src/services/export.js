@@ -1,11 +1,14 @@
+
 import { apiFetch } from "../api";
 
-export async function exportDataset(datasetId) {
-  const res = await apiFetch(`/export/${datasetId}`);
+export async function exportCOCO(datasetId) {
+  const res = await apiFetch(`/export/coco/${datasetId}`);
+  if (!res.ok) throw new Error("Failed to export COCO");
+  return res.json();
+}
 
-  if (!res.ok) {
-    throw new Error("Failed to export dataset");
-  }
-
+export async function exportYOLO(datasetId) {
+  const res = await apiFetch(`/export/yolo/${datasetId}`);
+  if (!res.ok) throw new Error("Failed to export YOLO");
   return res.json();
 }

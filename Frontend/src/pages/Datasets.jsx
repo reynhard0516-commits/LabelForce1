@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getMyDatasets, createDataset } from "../services/datasets";
 import { logout } from "../services/auth";
 
@@ -7,13 +8,17 @@ export default function Datasets() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function loadDatasets() {
     try {
+      setLoading(true);
       const data = await getMyDatasets();
       setDatasets(data);
     } catch (err) {
       setError(err.message || "Failed to load datasets");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -36,37 +41,42 @@ export default function Datasets() {
   }
 
   return (
-    <div>
+    <div style={{ padding: 20 }}>
       <h1>My Datasets</h1>
 
       {/* Create dataset */}
-      <form onSubmit={handleCreate}>
+      <form onSubmit={handleCreate} style={{ marginBottom: 20 }}>
         <input
           placeholder="Dataset name"
           value={name}
           onChange={e => setName(e.target.value)}
           required
         />
+        <br />
         <input
           placeholder="Description"
           value={description}
           onChange={e => setDescription(e.target.value)}
         />
+        <br />
         <button type="submit">Create Dataset</button>
       </form>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {/* Dataset list */}
-      {datasets.length === 0 ? (
+      {loading ? (
+        <p>Loading datasets…</p>
+      ) : datasets.length === 0 ? (
         <p>No datasets yet</p>
       ) : (
         <ul>
           {datasets.map(ds => (
-            <li key={ds.id}>
-              <strong>{ds.name}</strong>
-              <br />
-              {ds.description}
+            <li key={ds.id} style={{ marginBottom: 10 }}>
+              <Link to={`/datasets/${ds.id}`}>
+                <strong>{ds.name}</strong>
+              </Link>
+              {ds.description && <p>{ds.description}</p>}
             </li>
           ))}
         </ul>

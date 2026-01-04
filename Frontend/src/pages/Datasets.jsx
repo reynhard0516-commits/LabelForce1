@@ -1,29 +1,25 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { getMyDatasets, createDataset } from "../services/datasets";
 import { logout } from "../services/auth";
+import { Link } from "react-router-dom";
 
 export default function Datasets() {
   const [datasets, setDatasets] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  async function loadDatasets() {
+  async function load() {
     try {
-      setLoading(true);
       const data = await getMyDatasets();
       setDatasets(data);
     } catch (err) {
-      setError(err.message || "Failed to load datasets");
-    } finally {
-      setLoading(false);
+      setError(err.message);
     }
   }
 
   useEffect(() => {
-    loadDatasets();
+    load();
   }, []);
 
   async function handleCreate(e) {
@@ -34,9 +30,9 @@ export default function Datasets() {
       await createDataset(name, description);
       setName("");
       setDescription("");
-      loadDatasets(); // refresh list
+      load();
     } catch (err) {
-      setError(err.message || "Failed to create dataset");
+      setError(err.message);
     }
   }
 
@@ -44,44 +40,32 @@ export default function Datasets() {
     <div style={{ padding: 20 }}>
       <h1>My Datasets</h1>
 
-      {/* Create dataset */}
-      <form onSubmit={handleCreate} style={{ marginBottom: 20 }}>
+      <form onSubmit={handleCreate}>
         <input
           placeholder="Dataset name"
           value={name}
           onChange={e => setName(e.target.value)}
           required
         />
-        <br />
         <input
           placeholder="Description"
           value={description}
           onChange={e => setDescription(e.target.value)}
         />
-        <br />
-        <button type="submit">Create Dataset</button>
+        <button>Create</button>
       </form>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* Dataset list */}
-      {loading ? (
-        <p>Loading datasets…</p>
-      ) : datasets.length === 0 ? (
-        <p>No datasets yet</p>
-      ) : (
-        <ul>
-  {datasets.map(ds => (
-    <li key={ds.id}>
-      <a href={`/datasets/${ds.id}`}>
-        <strong>{ds.name}</strong>
-      </a>
-      <br />
-      {ds.description}
-    </li>
-  ))}
-</ul>
-      )}
+      <ul>
+        {datasets.map(ds => (
+          <li key={ds.id}>
+            <Link to={`/datasets/${ds.id}`}>
+              <strong>{ds.name}</strong>
+            </Link>
+          </li>
+        ))}
+      </ul>
 
       <button onClick={logout}>Logout</button>
     </div>

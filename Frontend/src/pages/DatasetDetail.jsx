@@ -5,13 +5,8 @@ import { getDataset } from "../services/datasets";
 import { getItems, createItem, uploadImage } from "../services/dataItems";
 import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
-import {
-  exportDataset,
-  exportCOCO,
-  exportYOLO,
-  exportZIP,
-} from "../services/export";
-import { autoLabel } from "../services/ai";
+import { exportDataset, exportCOCO, exportYOLO } from "../services/export";
+
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
 
@@ -26,11 +21,13 @@ export default function DatasetDetail() {
   const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // =========================
-  // Load dataset
+  // Load dataset data
   // =========================
   async function load() {
+    setError("");
     try {
       const ds = await getDataset(id);
       const its = await getItems(id);
@@ -40,7 +37,7 @@ export default function DatasetDetail() {
       setItems(its);
       setLabels(lbs);
     } catch (err) {
-      setError(err.message || "Failed to load dataset");
+      setError(err?.message || "Failed to load dataset");
     }
   }
 
@@ -54,35 +51,36 @@ export default function DatasetDetail() {
   async function handleAddItem(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       await createItem(id, "text", text);
       setText("");
-      load();
+      await load();
     } catch (err) {
-      setError(err.message || "Failed to add item");
+      setError(err?.message || "Failed to add item");
+    } finally {
+      setLoading(false);
     }
   }
-<button
-  onClick={() => autoLabel(item.id).then(load)}
->
-  🤖 Auto-Label
-</button>
+
   // =========================
   // Upload image
   // =========================
   async function handleUpload(e) {
     e.preventDefault();
     setError("");
-
     if (!imageFile) return;
 
+    setLoading(true);
     try {
       await uploadImage(id, imageFile);
       setImageFile(null);
-      load();
+      await load();
     } catch (err) {
-      setError(err.message || "Failed to upload image");
+      setError(err?.message || "Failed to upload image");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -92,13 +90,16 @@ export default function DatasetDetail() {
   async function handleAddLabel(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       await createLabel(id, newLabel);
       setNewLabel("");
-      load();
+      await load();
     } catch (err) {
-      setError(err.message || "Failed to create label");
+      setError(err?.message || "Failed to create label");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -106,18 +107,17 @@ export default function DatasetDetail() {
   // Text annotation
   // =========================
   async function handleAnnotate(itemId, labelId) {
+    setError("");
     try {
-      await createAnnotation(itemId, labelId, {
-        value: "selected",
-      });
-      load();
+      await createAnnotation(itemId, labelId, { value: "selected" });
+      await load();
     } catch {
-      alert("Failed to save annotation");
+      setError("Failed to save annotation");
     }
   }
 
   // =========================
-  // Download helpers
+  // Download helper
   // =========================
   function downloadJSON(data, filename) {
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -131,39 +131,33 @@ export default function DatasetDetail() {
     URL.revokeObjectURL(url);
   }
 
-  async function downloadZIP(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   // =========================
   // Export handlers
   // =========================
   async function handleExportRaw() {
-    const data = await exportDataset(id);
-    downloadJSON(data, `${dataset.name}_raw.json`);
+    try {
+      const data = await exportDataset(id);
+      downloadJSON(data, `${dataset.name}_raw.json`);
+    } catch {
+      setError("Export failed");
+    }
   }
 
   async function handleExportCOCO() {
-    const data = await exportCOCO(id);
-    downloadJSON(data, `${dataset.name}_coco.json`);
+    try {
+      const data = await exportCOCO(id);
+      downloadJSON(data, `${dataset.name}_coco.json`);
+    } catch {
+      setError("COCO export failed");
+    }
   }
 
   async function handleExportYOLO() {
-    const data = await exportYOLO(id);
-    downloadJSON(data, `${dataset.name}_yolo.json`);
-  }
-
-  async function handleExportZIP() {
     try {
-      const blob = await exportZIP(id);
-      downloadZIP(blob, `${dataset.name}.zip`);
-    } catch (err) {
-      alert(err.message || "ZIP export failed");
+      const data = await exportYOLO(id);
+      downloadJSON(data, `${dataset.name}_yolo.json`);
+    } catch {
+      setError("YOLO export failed");
     }
   }
 
@@ -176,11 +170,10 @@ export default function DatasetDetail() {
 
       {/* ================= EXPORT ================= */}
       <hr />
-      <h3>Export</h3>
+      <h3>Export Dataset</h3>
       <button onClick={handleExportRaw}>⬇ Raw JSON</button>{" "}
       <button onClick={handleExportCOCO}>🧠 COCO</button>{" "}
-      <button onClick={handleExportYOLO}>🎯 YOLO</button>{" "}
-      <button onClick={handleExportZIP}>📦 ZIP</button>
+      <button onClick={handleExportYOLO}>🎯 YOLO</button>
 
       {/* ================= LABELS ================= */}
       <hr />
@@ -192,7 +185,7 @@ export default function DatasetDetail() {
           placeholder="Label name"
           required
         />
-        <button>Create</button>
+        <button disabled={loading}>Create</button>
       </form>
 
       <ul>
@@ -212,7 +205,7 @@ export default function DatasetDetail() {
           required
         />
         <br />
-        <button>Add</button>
+        <button disabled={loading}>Add</button>
       </form>
 
       <hr />
@@ -224,7 +217,7 @@ export default function DatasetDetail() {
           onChange={e => setImageFile(e.target.files[0])}
           required
         />
-        <button>Upload</button>
+        <button disabled={loading}>Upload</button>
       </form>
 
       {/* ================= ITEMS LIST ================= */}

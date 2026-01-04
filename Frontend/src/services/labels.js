@@ -1,12 +1,7 @@
 import { api } from "../api";
 
-export function getLabels(datasetId) {
-  return api.get(`/labels/${datasetId}`);
-}
+export const getLabels = (datasetId) =>
+  api.get(`/labels/${datasetId}`);
 
-export function createLabel(datasetId, name) {
-  return api.post("/labels", {
-    dataset_id: datasetId,
-    name,
-  });
-}
+export const createLabel = (datasetId, name) =>
+  api.post("/labels", { dataset_id: datasetId, name });

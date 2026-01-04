@@ -8,25 +8,45 @@ export default function Login() {
 
   async function submit(e) {
     e.preventDefault();
+    setError("");
+
     try {
       const data = await login(email, password);
       localStorage.setItem("token", data.access_token);
       window.location.href = "/";
     } catch {
-      setError("Login failed");
+      setError("Invalid email or password");
     }
   }
 
   return (
-    <form onSubmit={submit}>
+    <form
+      onSubmit={submit}
+      style={{
+        maxWidth: 400,
+        margin: "80px auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
       <h2>Login</h2>
-      <input value={email} onChange={e => setEmail(e.target.value)} />
+
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+
       <input
         type="password"
+        placeholder="Password"
         value={password}
         onChange={e => setPassword(e.target.value)}
       />
+
       <button>Login</button>
+
       {error && <p style={{ color: "red" }}>{error}</p>}
     </form>
   );

@@ -5,7 +5,12 @@ import { getDataset } from "../services/datasets";
 import { getItems, createItem, uploadImage } from "../services/dataItems";
 import { getLabels, createLabel } from "../services/labels";
 import { createAnnotation } from "../services/annotations";
-import { exportDataset, exportCOCO, exportYOLO } from "../services/export";
+import {
+  exportDataset,
+  exportCOCO,
+  exportYOLO,
+} from "../services/export";
+import { autoLabelItem } from "../services/ai";
 
 import ImageAnnotator from "../components/ImageAnnotator";
 import AnnotationList from "../components/AnnotationList";
@@ -21,13 +26,11 @@ export default function DatasetDetail() {
   const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   // =========================
-  // Load dataset data
+  // Load dataset
   // =========================
   async function load() {
-    setError("");
     try {
       const ds = await getDataset(id);
       const its = await getItems(id);
@@ -51,7 +54,6 @@ export default function DatasetDetail() {
   async function handleAddItem(e) {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
     try {
       await createItem(id, "text", text);
@@ -59,28 +61,24 @@ export default function DatasetDetail() {
       await load();
     } catch (err) {
       setError(err?.message || "Failed to add item");
-    } finally {
-      setLoading(false);
     }
   }
 
   // =========================
-  // Upload image
+  // Upload image item
   // =========================
   async function handleUpload(e) {
     e.preventDefault();
     setError("");
+
     if (!imageFile) return;
 
-    setLoading(true);
     try {
       await uploadImage(id, imageFile);
       setImageFile(null);
       await load();
     } catch (err) {
       setError(err?.message || "Failed to upload image");
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -90,7 +88,6 @@ export default function DatasetDetail() {
   async function handleAddLabel(e) {
     e.preventDefault();
     setError("");
-    setLoading(true);
 
     try {
       await createLabel(id, newLabel);
@@ -98,21 +95,37 @@ export default function DatasetDetail() {
       await load();
     } catch (err) {
       setError(err?.message || "Failed to create label");
-    } finally {
-      setLoading(false);
     }
   }
 
   // =========================
-  // Text annotation
+  // Manual text annotation
   // =========================
   async function handleAnnotate(itemId, labelId) {
-    setError("");
     try {
-      await createAnnotation(itemId, labelId, { value: "selected" });
+      await createAnnotation(itemId, labelId, {
+        value: "selected",
+      });
       await load();
     } catch {
-      setError("Failed to save annotation");
+      alert("Failed to save annotation");
+    }
+  }
+
+  // =========================
+  // AI Auto-Label (TEXT ONLY)
+  // =========================
+  async function handleAutoLabel(itemId) {
+    setError("");
+
+    try {
+      await autoLabelItem(itemId);
+      await load();
+      alert("AI label applied");
+    } catch (err) {
+      setError(
+        err?.response?.data?.detail || "AI labeling failed"
+      );
     }
   }
 
@@ -120,9 +133,10 @@ export default function DatasetDetail() {
   // Download helper
   // =========================
   function downloadJSON(data, filename) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
+    const blob = new Blob(
+      [JSON.stringify(data, null, 2)],
+      { type: "application/json" }
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -135,30 +149,18 @@ export default function DatasetDetail() {
   // Export handlers
   // =========================
   async function handleExportRaw() {
-    try {
-      const data = await exportDataset(id);
-      downloadJSON(data, `${dataset.name}_raw.json`);
-    } catch {
-      setError("Export failed");
-    }
+    const data = await exportDataset(id);
+    downloadJSON(data, `${dataset.name}_raw.json`);
   }
 
   async function handleExportCOCO() {
-    try {
-      const data = await exportCOCO(id);
-      downloadJSON(data, `${dataset.name}_coco.json`);
-    } catch {
-      setError("COCO export failed");
-    }
+    const data = await exportCOCO(id);
+    downloadJSON(data, `${dataset.name}_coco.json`);
   }
 
   async function handleExportYOLO() {
-    try {
-      const data = await exportYOLO(id);
-      downloadJSON(data, `${dataset.name}_yolo.json`);
-    } catch {
-      setError("YOLO export failed");
-    }
+    const data = await exportYOLO(id);
+    downloadJSON(data, `${dataset.name}_yolo.json`);
   }
 
   if (!dataset) return <p>Loading…</p>;
@@ -170,7 +172,7 @@ export default function DatasetDetail() {
 
       {/* ================= EXPORT ================= */}
       <hr />
-      <h3>Export Dataset</h3>
+      <h3>Export</h3>
       <button onClick={handleExportRaw}>⬇ Raw JSON</button>{" "}
       <button onClick={handleExportCOCO}>🧠 COCO</button>{" "}
       <button onClick={handleExportYOLO}>🎯 YOLO</button>
@@ -185,7 +187,7 @@ export default function DatasetDetail() {
           placeholder="Label name"
           required
         />
-        <button disabled={loading}>Create</button>
+        <button>Create</button>
       </form>
 
       <ul>
@@ -205,7 +207,7 @@ export default function DatasetDetail() {
           required
         />
         <br />
-        <button disabled={loading}>Add</button>
+        <button>Add</button>
       </form>
 
       <hr />
@@ -217,10 +219,10 @@ export default function DatasetDetail() {
           onChange={e => setImageFile(e.target.files[0])}
           required
         />
-        <button disabled={loading}>Upload</button>
+        <button>Upload</button>
       </form>
 
-      {/* ================= ITEMS LIST ================= */}
+      {/* ================= ITEM LIST ================= */}
       <hr />
       <h3>Items</h3>
 
@@ -241,22 +243,40 @@ export default function DatasetDetail() {
                       })
                     }
                   />
-                  <AnnotationList itemId={item.id} labels={labels} />
+                  <AnnotationList
+                    itemId={item.id}
+                    labels={labels}
+                  />
                 </>
               ) : (
                 <>
-                  <strong>{item.data_type}</strong>: {item.data_url}
+                  <strong>{item.data_type}</strong>:{" "}
+                  {item.data_url}
                   <br />
+
                   {labels.map(label => (
                     <button
                       key={label.id}
-                      onClick={() => handleAnnotate(item.id, label.id)}
+                      onClick={() =>
+                        handleAnnotate(item.id, label.id)
+                      }
                       style={{ marginRight: 5 }}
                     >
                       {label.name}
                     </button>
                   ))}
-                  <AnnotationList itemId={item.id} labels={labels} />
+
+                  <button
+                    onClick={() => handleAutoLabel(item.id)}
+                    style={{ marginLeft: 10 }}
+                  >
+                    🤖 Auto-Label
+                  </button>
+
+                  <AnnotationList
+                    itemId={item.id}
+                    labels={labels}
+                  />
                 </>
               )}
             </li>
@@ -270,4 +290,4 @@ export default function DatasetDetail() {
       <Link to="/">← Back</Link>
     </div>
   );
-}
+          }

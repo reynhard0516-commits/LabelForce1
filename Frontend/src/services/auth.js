@@ -1,20 +1,26 @@
-import { api } from "../api";
+import { apiFetch } from "../api";
 
 export async function login(email, password) {
-  const res = await api.post("/auth/login", { email, password });
-  localStorage.setItem("token", res.access_token);
-  return res;
+  const res = await apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
 }
 
 export async function register(email, password) {
-  return api.post("/auth/register", { email, password });
+  const res = await apiFetch("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
 }
 
-export function logout() {
+export async function logout() {
   localStorage.removeItem("token");
   window.location.href = "/login";
 }
 
-export function isAuthenticated() {
-  return Boolean(localStorage.getItem("token"));
+export function isLoggedIn() {
+  return !!localStorage.getItem("token");
 }

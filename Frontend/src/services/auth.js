@@ -1,38 +1,20 @@
-import { apiFetch } from "../api";
-
-export function isLoggedIn() {
-  return !!localStorage.getItem("token");
-}
+import { api } from "../api";
 
 export async function login(email, password) {
-  const res = await apiFetch("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || "Login failed");
-  }
-
-  return res.json();
+  const data = await api.post("/auth/login", { email, password });
+  localStorage.setItem("token", data.access_token);
+  return data;
 }
 
 export async function register(email, password) {
-  const res = await apiFetch("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || "Registration failed");
-  }
-
-  return res.json();
+  return api.post("/auth/register", { email, password });
 }
 
 export function logout() {
   localStorage.removeItem("token");
   window.location.href = "/login";
+}
+
+export function isAuthenticated() {
+  return Boolean(localStorage.getItem("token"));
 }

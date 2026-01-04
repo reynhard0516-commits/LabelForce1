@@ -1,9 +1,9 @@
 import { api } from "../api";
 
 export async function login(email, password) {
-  const data = await api.post("/auth/login", { email, password });
-  localStorage.setItem("token", data.access_token);
-  return data;
+  const res = await api.post("/auth/login", { email, password });
+  localStorage.setItem("token", res.access_token);
+  return res;
 }
 
 export async function register(email, password) {

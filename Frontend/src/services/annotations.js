@@ -1,13 +1,11 @@
 import { api } from "../api";
 
-export function createAnnotation(itemId, labelId, value) {
-  return api.post("/annotations", {
+export const createAnnotation = (itemId, labelId, value) =>
+  api.post("/annotations", {
     item_id: itemId,
     label_id: labelId,
     value,
   });
-}
 
-export function getAnnotations(itemId) {
-  return api.get(`/annotations/${itemId}`);
-}
+export const getAnnotations = (itemId) =>
+  api.get(`/annotations/${itemId}`);

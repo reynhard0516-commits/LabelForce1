@@ -1,5 +1,16 @@
-import { api } from "../api";
+import { apiFetch } from "../api";
 
-export const exportDataset = (id) => api.get(`/export/${id}`);
-export const exportCOCO = (id) => api.get(`/export/coco/${id}`);
-export const exportYOLO = (id) => api.get(`/export/yolo/${id}`);
+export async function exportDataset(id) {
+  const res = await apiFetch(`/export/${id}`);
+  return res.json();
+}
+
+export async function exportCOCO(id) {
+  const res = await apiFetch(`/export/coco/${id}`);
+  return res.json();
+}
+
+export async function exportYOLO(id) {
+  const res = await apiFetch(`/export/yolo/${id}`);
+  return res.json();
+}

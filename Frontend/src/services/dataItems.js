@@ -1,43 +1,37 @@
-import { apiFetch } from "../api";
+import { api } from "../api";
 
-/**
- * Get items for a dataset
- */
-export async function getItems(datasetId) {
-  const res = await apiFetch(`/items/${datasetId}`);
-  if (!res.ok) throw new Error("Failed to load items");
-  return res.json();
+export function getItems(datasetId) {
+  return api.get(`/items/${datasetId}`);
 }
 
-/**
- * Create text item
- */
-export async function createItem(datasetId, type, data) {
-  const res = await apiFetch(`/items/${datasetId}`, {
-    method: "POST",
-    body: JSON.stringify({
-      data_type: type,
-      data_url: data,
-    }),
+export function createItem(datasetId, dataType, dataUrl) {
+  return api.post("/items", {
+    dataset_id: datasetId,
+    data_type: dataType,
+    data_url: dataUrl,
   });
-
-  if (!res.ok) throw new Error("Failed to create item");
-  return res.json();
 }
 
-/**
- * Upload image item
- */
 export async function uploadImage(datasetId, file) {
-  const form = new FormData();
-  form.append("file", file);
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("dataset_id", datasetId);
 
-  const res = await apiFetch(`/items/${datasetId}/upload`, {
-    method: "POST",
-    body: form,
-    headers: {}, // IMPORTANT: let browser set multipart headers
-  });
+  const res = await fetch(
+    `${import.meta.env.VITE_API_URL}/items/upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  );
 
-  if (!res.ok) throw new Error("Failed to upload image");
+  if (!res.ok) {
+    throw new Error("Image upload failed");
+  }
+
   return res.json();
 }

@@ -1,13 +1,5 @@
 import { api } from "../api";
 
-export function exportDataset(datasetId) {
-  return api.get(`/export/${datasetId}`);
-}
-
-export function exportCOCO(datasetId) {
-  return api.get(`/export/coco/${datasetId}`);
-}
-
-export function exportYOLO(datasetId) {
-  return api.get(`/export/yolo/${datasetId}`);
-}
+export const exportDataset = (id) => api.get(`/export/${id}`);
+export const exportCOCO = (id) => api.get(`/export/coco/${id}`);
+export const exportYOLO = (id) => api.get(`/export/yolo/${id}`);

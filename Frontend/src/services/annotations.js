@@ -1,38 +1,13 @@
-import { apiFetch } from "../api";
+import { api } from "../api";
 
-/**
- * Get annotations for an item
- */
-export async function getAnnotations(itemId) {
-  const res = await apiFetch(`/annotations/${itemId}`);
-  if (!res.ok) throw new Error("Failed to load annotations");
-  return res.json();
+export function createAnnotation(itemId, labelId, value) {
+  return api.post("/annotations", {
+    item_id: itemId,
+    label_id: labelId,
+    value,
+  });
 }
 
-/**
- * Create annotation
- */
-export async function createAnnotation(itemId, labelId, data) {
-  const res = await apiFetch(`/annotations/${itemId}`, {
-    method: "POST",
-    body: JSON.stringify({
-      label_id: labelId,
-      data,
-    }),
-  });
-
-  if (!res.ok) throw new Error("Failed to create annotation");
-  return res.json();
-}
-
-/**
- * Delete annotation
- */
-export async function deleteAnnotation(annotationId) {
-  const res = await apiFetch(`/annotations/${annotationId}`, {
-    method: "DELETE",
-  });
-
-  if (!res.ok) throw new Error("Failed to delete annotation");
-  return true;
+export function getAnnotations(itemId) {
+  return api.get(`/annotations/${itemId}`);
 }

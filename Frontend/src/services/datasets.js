@@ -1,6 +1,19 @@
-import { api } from "../api";
+import { apiFetch } from "../api";
 
-export const getDatasets = () => api.get("/datasets");
-export const getDataset = (id) => api.get(`/datasets/${id}`);
-export const createDataset = (name, description) =>
-  api.post("/datasets", { name, description });
+export async function getDatasets() {
+  const res = await apiFetch("/datasets");
+  return res.json();
+}
+
+export async function getDataset(id) {
+  const res = await apiFetch(`/datasets/${id}`);
+  return res.json();
+}
+
+export async function createDataset(name, description) {
+  const res = await apiFetch("/datasets", {
+    method: "POST",
+    body: JSON.stringify({ name, description }),
+  });
+  return res.json();
+}

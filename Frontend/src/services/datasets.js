@@ -1,13 +1,6 @@
 import { api } from "../api";
 
-export function getDatasets() {
-  return api.get("/datasets");
-}
-
-export function getDataset(id) {
-  return api.get(`/datasets/${id}`);
-}
-
-export function createDataset(name, description) {
-  return api.post("/datasets", { name, description });
-}
+export const getDatasets = () => api.get("/datasets");
+export const getDataset = (id) => api.get(`/datasets/${id}`);
+export const createDataset = (name, description) =>
+  api.post("/datasets", { name, description });

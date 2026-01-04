@@ -14,11 +14,10 @@ export async function apiFetch(path, options = {}) {
     },
   });
 
-  // 🔒 Auto logout on invalid token
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-    throw new Error("Session expired");
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await res.text();
+    throw new Error(text.slice(0, 200));
   }
 
   return res;

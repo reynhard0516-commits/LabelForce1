@@ -1,14 +1,21 @@
-import { api } from "../api";
+import { apiFetch } from "../api";
 
-export const getItems = (datasetId) =>
-  api.get(`/items/${datasetId}`);
+export async function getItems(datasetId) {
+  const res = await apiFetch(`/items/${datasetId}`);
+  return res.json();
+}
 
-export const createItem = (datasetId, type, data) =>
-  api.post("/items", {
-    dataset_id: datasetId,
-    data_type: type,
-    data_url: data,
+export async function createItem(datasetId, type, value) {
+  const res = await apiFetch("/items", {
+    method: "POST",
+    body: JSON.stringify({
+      dataset_id: datasetId,
+      data_type: type,
+      data_url: value,
+    }),
   });
+  return res.json();
+}
 
 export async function uploadImage(datasetId, file) {
   const token = localStorage.getItem("token");
@@ -20,11 +27,12 @@ export async function uploadImage(datasetId, file) {
     `${import.meta.env.VITE_API_URL}/items/upload`,
     {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: form,
     }
   );
 
-  if (!res.ok) throw new Error("Upload failed");
   return res.json();
 }

@@ -1,21 +1,12 @@
-import { apiFetch } from "../api";
+import { api } from "../api";
 
-/**
- * Get labels for a dataset
- */
-export async function getLabels(datasetId) {
-  const res = await apiFetch(`/labels/${datasetId}`);
-  if (!res.ok) throw new Error("Failed to load labels");
-  return res.json();
+export function getLabels(datasetId) {
+  return api.get(`/labels/${datasetId}`);
 }
 
-/**
- * Create label
- */
-export async function createLabel(datasetId, name) {
-  const res = await apiFetch(`/labels/${datasetId}?name=${encodeURIComponent(name)}`, {
-    method: "POST",
+export function createLabel(datasetId, name) {
+  return api.post("/labels", {
+    dataset_id: datasetId,
+    name,
   });
-  if (!res.ok) throw new Error("Failed to create label");
-  return res.json();
 }

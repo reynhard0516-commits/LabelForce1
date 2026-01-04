@@ -1,8 +1,5 @@
 import { apiFetch } from "../api";
 
-/**
- * Get all datasets owned by the logged-in user
- */
 export async function getMyDatasets() {
   const res = await apiFetch("/datasets");
 
@@ -18,14 +15,11 @@ export async function getMyDatasets() {
   return res.json();
 }
 
-/**
- * Get a single dataset by ID
- */
-export async function getDataset(datasetId) {
-  const res = await apiFetch(`/datasets/${datasetId}`);
+export async function getDataset(id) {
+  const res = await apiFetch(`/datasets/${id}`);
 
   if (!res.ok) {
-    let message = "Failed to load dataset";
+    let message = "Dataset not found";
     try {
       const err = await res.json();
       message = err.detail || message;
@@ -36,9 +30,6 @@ export async function getDataset(datasetId) {
   return res.json();
 }
 
-/**
- * Create a new dataset
- */
 export async function createDataset(name, description) {
   const res = await apiFetch("/datasets", {
     method: "POST",

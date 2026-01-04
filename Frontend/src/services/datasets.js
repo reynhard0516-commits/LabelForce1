@@ -1,49 +1,13 @@
-import { apiFetch } from "../api";
+import { api } from "../api";
 
-export async function getMyDatasets() {
-  const res = await apiFetch("/datasets");
-
-  if (!res.ok) {
-    let message = "Failed to load datasets";
-    try {
-      const err = await res.json();
-      message = err.detail || message;
-    } catch {}
-    throw new Error(message);
-  }
-
-  return res.json();
+export function getDatasets() {
+  return api.get("/datasets");
 }
 
-export async function getDataset(id) {
-  const res = await apiFetch(`/datasets/${id}`);
-
-  if (!res.ok) {
-    let message = "Dataset not found";
-    try {
-      const err = await res.json();
-      message = err.detail || message;
-    } catch {}
-    throw new Error(message);
-  }
-
-  return res.json();
+export function getDataset(id) {
+  return api.get(`/datasets/${id}`);
 }
 
-export async function createDataset(name, description) {
-  const res = await apiFetch("/datasets", {
-    method: "POST",
-    body: JSON.stringify({ name, description }),
-  });
-
-  if (!res.ok) {
-    let message = "Failed to create dataset";
-    try {
-      const err = await res.json();
-      message = err.detail || message;
-    } catch {}
-    throw new Error(message);
-  }
-
-  return res.json();
+export function createDataset(name, description) {
+  return api.post("/datasets", { name, description });
 }

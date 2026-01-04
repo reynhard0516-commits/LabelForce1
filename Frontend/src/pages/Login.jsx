@@ -1,22 +1,18 @@
 import { useState } from "react";
-import { login, isLoggedIn } from "../services/auth";
-import { Navigate } from "react-router-dom";
+import { login } from "../services/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  if (isLoggedIn()) {
-    return <Navigate to="/" replace />;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     try {
-      await login(email, password);
+      const data = await login(email, password);
+      localStorage.setItem("token", data.access_token);
       window.location.href = "/";
     } catch (err) {
       setError(err.message);
@@ -24,27 +20,29 @@ export default function Login() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
+    <div style={{ maxWidth: 400, margin: "100px auto" }}>
+      <h2>LabelForce Login</h2>
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={e => setEmail(e.target.value)}
-        required
-      />
+      <form onSubmit={handleSubmit}>
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        required
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
 
-      <button type="submit">Login</button>
+        <button>Login</button>
+      </form>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
-    </form>
+    </div>
   );
 }

@@ -1,32 +1,34 @@
-
 import { useEffect, useState } from "react";
-import { getMe, logout } from "../services/auth";
+import { getDatasets, createDataset } from "../services/datasets";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
+  const [datasets, setDatasets] = useState([]);
+  const [name, setName] = useState("");
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const me = await getMe();
-        setUser(me);
-      } catch {
-        logout();
-      }
-    }
-    loadUser();
+    getDatasets().then(setDatasets);
   }, []);
 
-  if (!user) {
-    return <p>Loading...</p>;
+  async function create() {
+    await createDataset(name, "");
+    setName("");
+    setDatasets(await getDatasets());
   }
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Logged in as: {user.email}</p>
+    <>
+      <h1>Datasets</h1>
+      <input value={name} onChange={e => setName(e.target.value)} />
+      <button onClick={create}>Create</button>
 
-      <button onClick={logout}>Logout</button>
-    </div>
+      <ul>
+        {datasets.map(d => (
+          <li key={d.id}>
+            <Link to={`/datasets/${d.id}`}>{d.name}</Link>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

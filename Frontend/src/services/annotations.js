@@ -1,11 +1,18 @@
-import { api } from "../api";
+import { apiFetch } from "../api";
 
-export const createAnnotation = (itemId, labelId, value) =>
-  api.post("/annotations", {
-    item_id: itemId,
-    label_id: labelId,
-    value,
+export async function createAnnotation(itemId, labelId, value) {
+  const res = await apiFetch("/annotations", {
+    method: "POST",
+    body: JSON.stringify({
+      item_id: itemId,
+      label_id: labelId,
+      value,
+    }),
   });
+  return res.json();
+}
 
-export const getAnnotations = (itemId) =>
-  api.get(`/annotations/${itemId}`);
+export async function getAnnotations(itemId) {
+  const res = await apiFetch(`/annotations/${itemId}`);
+  return res.json();
+}
